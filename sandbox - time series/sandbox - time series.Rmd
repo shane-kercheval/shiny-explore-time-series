@@ -54,6 +54,7 @@ plot(tseries)
 
 ```{r, echo=FALSE}
 library(fpp2)
+library(rtools)
 
 
 class(a10)

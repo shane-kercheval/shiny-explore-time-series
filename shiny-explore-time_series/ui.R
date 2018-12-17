@@ -107,120 +107,12 @@ shinyUI(fluidPage(theme="custom.css",
                 bsCollapse(id='var_plots__bscollapse', open='Variables', multiple=TRUE,
                     bsCollapsePanel(
                         'Variables',
-                        uiOutput('var_plots__variable__UI'),
-                        uiOutput('var_plots__comparison__UI'),
-                        # NOTE: the variables below can't be hidden initially (but rather are dynamically hidden)
-                        # because the values need to load the first time this tab is clicked
-                        # if not, when they become active (and therefore the values change to the default,
-                        # they will trigger an unncessary plot refresh
-                        uiOutput('var_plots__date_aggregation__UI'),
-                        uiOutput('var_plots__sum_by_variable__UI'),
-                        uiOutput('var_plots__color_variable__UI'),
-                        uiOutput('var_plots__point_size__UI'),
+                        #uiOutput('var_plots__variable__UI'),
                         style='default'
                     ),
                     bsCollapsePanel(
                         'Filters',
-                        fluidRow(
-                            column(4,
-                                checkboxInput(inputId='var_plots__filter_use',
-                                              label='Use Filters', value=FALSE, width=NULL)
-                            ),
-                            column(8,
-                                tags$div(style='margin-bottom: 10px;', actionButton(inputId='var_plots__filter_apply', label='Apply Filters')),
-                                tags$div(style='margin-bottom: 20px;', actionButton(inputId='var_plots__filter_clear', label='Clear Filters'))
-                            )
-                        ),
                         uiOutput('var_plots__filter_bscollapse__UI')
-                    ),
-                    bsCollapsePanel(
-                        'Plot Options',
-                        shinyjs::hidden(
-                            selectInput(inputId='var_plots__numeric_graph_type',
-                                    label='Type',
-                                    choices=c('Boxplot', 'Histogram'),
-                                    selected='Boxplot')
-                        ),
-                        shinyjs::hidden(tags$div(id='div_var_plots__group_barchar_controls',
-                            checkboxInput(inputId='var_plots__order_by_count',
-                                          label='Order By Totals', value=TRUE, width=NULL),
-                            checkboxInput(inputId='var_plots__show_variable_totals',
-                                          label='Show Variable Totals', value=TRUE, width=NULL),
-                            checkboxInput(inputId='var_plots__show_comparison_totals',
-                                          label='Show Comparison Totals', value=TRUE, width=NULL)
-                        )),
-                        shinyjs::hidden(tags$div(id='div_var_plots__multi_barchar_controls',
-                            checkboxInput(inputId='var_plots__stacked_comparison',
-                                          label='Stack Comparison Variable', value=TRUE, width=NULL)
-                        )),
-                        shinyjs::hidden(
-                             numericInput(inputId='var_plots__histogram_bins',
-                                          label='Number of Bins',
-                                          value=30)                 
-                        ),
-                        shinyjs::hidden(tags$div(id='div_var_plots__group_scatter_controls',
-                            sliderTextInput(inputId='var_plots__transparency',
-                                            label='Transparency',
-                                            choices=c(seq(0, 90, 10), 99),
-                                            selected=60,
-                                            post  = " %",
-                                            grid=TRUE),
-                            checkboxInput(inputId='var_plots__jitter',
-                                          label='Jitter', value=FALSE, width=NULL)
-                        )),
-                        shinyjs::hidden(tags$div(id='div_var_plots__group_trend_controls',
-                            radioButtons(inputId='var_plots__trend_line',
-                                         label='Trend Line:',
-                                         choices=c('None', 'Straight', 'Smooth'),
-                                         selected='None',
-                                         inline=TRUE,
-                                         width=NULL),
-                            radioButtons(inputId='var_plots__trend_line_se',
-                                         label='Trend Confidence Interval:',
-                                         choices=c('No', 'Yes'),
-                                         selected='Yes',
-                                         inline=TRUE,
-                                         width=NULL)
-                        )),
-                        shinyjs::hidden(tags$div(id='div_var_plots__group_x_zoom_controls',
-                             checkboxInput(inputId='var_plots__scale_x_log_base_10',
-                                           label='Scale X-Axis Log 10', value=FALSE, width=NULL),
-                             numericInput(inputId='var_plots__x_zoom_min',
-                                          label='X-Axis Zoom Min',
-                                          value=NULL),
-                             numericInput(inputId='var_plots__x_zoom_max',
-                                          label='X-Axis Zoom Max',
-                                          value=NULL)                         
-                        )),
-                        shinyjs::hidden(tags$div(id='div_var_plots__group_y_zoom_controls',
-                             checkboxInput(inputId='var_plots__scale_y_log_base_10',
-                                           label='Scale Y-Axis Log 10', value=FALSE, width=NULL),
-                             numericInput(inputId='var_plots__y_zoom_min',
-                                          label='Y-Axis Zoom Min',
-                                          value=NULL),
-                             numericInput(inputId='var_plots__y_zoom_max',
-                                          label='Y-Axis Zoom Max',
-                                          value=NULL)                         
-                        )),
-                        style='default'
-                    ),
-                    bsCollapsePanel(
-                        'Pretty Options',
-                        sliderTextInput(inputId='var_plots__base_size',
-                                        label='Text Size',
-                                        choices=seq(6, 20, 1),
-                                        selected=15,
-                                        grid=TRUE),
-                        checkboxInput(inputId='var_plots__pretty_text',
-                                      label='Pretty Text', value=FALSE, width=NULL),
-                        shinyjs::hidden(
-                           checkboxInput(inputId='var_plots__annotate_points',
-                                         label='Annotate Points', value=FALSE, width=NULL)
-                        ),
-                        numericInput(inputId='var_plots__filter_factor_lump_number',
-                                     label='Top N Categories',
-                                     value=NULL),
-                        style='default'
                     )
                 )
             ),

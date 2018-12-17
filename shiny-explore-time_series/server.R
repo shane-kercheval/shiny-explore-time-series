@@ -90,25 +90,15 @@ shinyServer(function(input, output, session) {
     reactiveValues__vp__ggplot_message <- reactiveValues(value=NULL)
     output$var_plots__ggplot_messages <- renderPrint__reactiveValues__vp__ggplot_message(reactiveValues__vp__ggplot_message)
 
-    # Viarable Plot - Filters - this builds up the filters based on the dataset column types and dynamically 
+    # Viarable Plot - Filters
     # adds the controls to var_plots__filter_bscollapse__UI
-    filter_controls_list <- reactive__filter_controls_list(input, reactive__source_data)
-    output$var_plots__filter_bscollapse__UI <- renderUI__var_plots__filter_bscollapse__UI(filter_controls_list)
-    observeEvent__var_plots__filter_clear(input, session)
-    observeEvent__var_plots__filter_apply(input, session)
-    observe__var_plots__bscollapse__dynamic_inputs(input, session, reactive__source_data)
-    observeEvent__var_plots__filter_use(input, session)
+#output$var_plots__filter_bscollapse__UI <- renderUI__var_plots__filter_bscollapse__UI(filter_controls_list)
 
     # main plot
     output$var_plots <- renderPlot__variable_plot(session,
                                                   reactive__var_plots__ggplot,
                                                   reactiveValues__vp__ggplot_message)
-    output$var_plots__variable__UI <- renderUI__var_plots__variable__UI(reactive__source_data)
-    output$var_plots__comparison__UI <- renderUI__var_plots__comparison__UI(input, reactive__source_data)
-    output$var_plots__date_aggregation__UI <- renderUI__var_plots__date_aggregation__UI(reactive__source_data)
-    output$var_plots__sum_by_variable__UI <- renderUI__var_plots__sum_by_variable__UI(reactive__source_data)
-    output$var_plots__color_variable__UI <- renderUI__var_plots__color_variable__UI(input, reactive__source_data)
-    output$var_plots__point_size__UI <- renderUI__var_plots__point_size__UI(reactive__source_data)
+    #output$var_plots__variable__UI <- renderUI__var_plots__variable__UI(reactive__source_data)
     observe__var_plots__hide_show_uncollapse_on_primary_vars(input, session)
 
     ##########################################################################################################
