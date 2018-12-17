@@ -1,0 +1,226 @@
+---
+title: "sandbox - time series"
+author: "Shane Kercheval"
+output:
+    md_document:
+    variant: markdown_github
+toc: true
+toc_depth: 4
+---
+    
+```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+library(knitr)
+
+# library(lubridate)
+# library(tidyverse)
+# library(stringr)
+# library(scales)
+# library(ggrepel)
+# library(rtools)
+
+options(scipen=999) # non-scientific notation
+```
+
+```{r, echo=FALSE}
+set.seed(41)
+s <- seq(from = 1, to = 100, by = 1) + 10 + rnorm(100, sd = 7)
+set.seed(42)
+t <- seq(from = 1, to = 100, by = 1) + 10 + rnorm(100, sd = 7)
+
+t
+plot(t)
+```
+
+```{r, echo=FALSE}
+temp <- cbind(ts(s), ts(t))
+
+temp[, 1]
+```
+
+
+
+```{r, echo=FALSE}
+ts(t, start=2000, frequency = 12)
+```
+
+```{r, echo=FALSE}
+tseries <- ts(t, start=2000, frequency = 4)
+tseries
+```
+
+```{r, echo=FALSE}
+plot(tseries)
+```
+
+```{r, echo=FALSE}
+library(fpp2)
+
+
+class(a10)
+
+as.matrix(a10)
+
+
+data.frame(Y=as.matrix(a10), date=time(a10))
+
+dataset <- a10
+dataset <- melsyd
+dataset <- elecdemand
+
+colnames(elecdemand)
+
+rt_explore_plot_correlations(as.data.frame(dataset))
+
+asdf <- function(dataset) {
+    
+    categoric_dataset <- as.data.frame(dataset) %>% select_if(Negate(is.numeric))
+    if(ncol(categoric_dataset) == 0) {
+
+        return (data.frame())
+
+    } else {
+
+        return (rt_explore_categoric_summary(categoric_dataset))
+    }
+}
+
+asdf(dataset)
+
+library(dplyr)
+rt_explore_numeric_summary(as.data.frame(dataset) %>% select_if(is.numeric))
+
+categoric_dataset <- as.data.frame(dataset) %>% select_if(Negate(is.numeric))
+ncol()
+rt_explore_categoric_summary()
+
+```
+
+
+```{r}
+
+paste0(start(dataset), collapse = ', ')
+paste0(end(dataset), collapse = ', ')
+frequency(dataset)
+
+??seasonal.periods
+
+attr(dataset,'methods')
+showMethods(classes="msts")
+
+pretty_dataset <- function(dataset) {
+
+    classes <- class(dataset)
+    if(length(classes) == 1 && classes == 'ts') {
+
+        return (data.frame(date=time(dataset), value=as.matrix(dataset)))
+        
+    } else if (any(classes == 'mts') || any(classes == 'msts')) {
+        
+        return (cbind(data.frame(date = time(dataset)), as.data.frame(dataset)))
+        
+    } else {
+        
+        stopifnot(FALSE)
+    }
+}
+pretty_dataset(dataset)
+pretty_dataset(dataset=a10)
+pretty_dataset(dataset=melsyd)
+prett
+
+class(a10)
+any(class(melsyd) == 'mts')
+class(visnights)
+
+
+library(ggplot2)
+#install.packages('ggfortify')
+#install.packages('zoo')
+library(ggfortify)
+library(scales)
+time(tseries)
+
+visnights %>%
+#    zoo() %>%
+autoplot() +
+    ggtitle('Autoplot') +
+    xlab('Year') +
+    #scale_x_discrete(breaks=x_output$timestamp[brks])
+    #scale_x_continuous(breaks=2000:2024) 
+    #scale_x_date(breaks = date_breaks("year"), labels = date_format("%Y")) +
+    scale_x_date(breaks = date_breaks("5 years"), minor_breaks = date_breaks("1 years"), labels = date_format("%Y")) +
+    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+#    scale_x_yearqtr()
+```
+
+```{r}
+rt_explore_numeric_summary(a10)
+rt_explore_numeric_summary(visnights)
+rt_explore_correlations(visnights)
+
+rt_explore_plot_time_series(a10)
+```
+
+
+```{r, echo=FALSE}
+#install.packages('fpp2')
+#library(fpp2)
+
+a10
+melsyd[!is.na(melsyd[, 'First.Class']), 'First.Class']
+melsyd[, 'First.Class']
+ts(melsyd[, 'First.Class'])
+
+colnames(a10)
+colnames(melsyd)
+
+
+colnames(a10)
+colnames(melsyd[, 'First.Class'])
+as.numeric(a10)
+as.numeric(melsyd[, 'First.Class'])
+
+class(a10) == 'ts'
+class(melsyd[, 'First.Class']) == 'ts'
+
+typeof(a10)
+typeof(melsyd[, 'First.Class'])
+
+
+dim(a10)
+dim(melsyd[, 'First.Class'])
+window(melsyd[, 'First.Class'], start=c(1990, 0))
+
+
+s <- start(temp[, 1])
+e <- end(temp[, 1])
+f <- frequency(temp[, 1])
+ts(as.numeric(temp[, 1]), start=s, end=e, frequency=4)
+
+#temp[, 1] %>%
+ts(as.numeric(temp[, 1]), start=s, end=e, frequency=f) %>%
+#melsyd[, 'First.Class'] %>%
+#window(start=c(1990, 0)) %>%
+#a10 %>%
+temp %>%
+    autoplot() +
+    ggtitle('Autoplot') 
+#    xlab('') 
+    #scale_x_discrete(breaks=x_output$timestamp[brks])
+    #scale_x_continuous(breaks=0:100) 
+    #scale_x_date(date_breaks = "1 year")
+    scale_x_date(breaks = date_breaks("1 years"), labels = date_format("%Y"))
+    #scale_x_date(breaks = c(198))
+
+
+, labels = date_format("%Y")) +
+    #scale_x_date(breaks = date_breaks("5 years"), minor_breaks = date_breaks("1 years"), labels = date_format("%Y")) +
+    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+#    scale_x_yearqtr()
+```
+
+
+
+
+
+
