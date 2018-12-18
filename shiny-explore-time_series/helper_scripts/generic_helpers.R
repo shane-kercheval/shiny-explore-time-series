@@ -11,11 +11,6 @@ dataset_or_null <- function(file) {
     }
 }
 
-is_date_type <- function(x) {
-    return (is.Date(x) || is.POSIXct(x) || is.POSIXlt(x))
-}
-
-
 is_single_time_series <- function(x) {
 
     classes <- class(x)
@@ -36,18 +31,6 @@ null_if_select_variable_optional <- function(value) {
     }
 
     return (value)
-}
-
-custom_filter <- function(dataset, factor_lump_number=NULL) {
-
-    if(!is.na(factor_lump_number)) {
-
-        dataset <- dataset %>%
-            mutate_if(is.character, as.factor) %>%
-            mutate_if(is.factor, ~fct_lump(.x, n=factor_lump_number))
-    }
-
-    return (dataset)
 }
 
 easy_regression <- function(dataset,
@@ -111,41 +94,6 @@ easy_regression <- function(dataset,
              reference=reference)
     )
 }
-
-# dataset <- read.csv("example_datasets/housing.csv", header=TRUE)
-# dependent_variable <- 'median_house_value'
-# independent_variables <- c('longitude', 'latitude', 'housing_median_age', 'total_rooms', 'total_bedrooms', 'population', 'households', 'median_income', 'ocean_proximity')
-
-# dataset <- read.csv("example_datasets/credit.csv", header=TRUE)
-# dependent_variable <- 'default'
-# independent_variables <- colnames(dataset)[1:16]
-# 
-# results <- easy_regression(dataset, dependent_variable, independent_variables)
-# summary(results$results)
-# names(results$results)
-# plot(results$results, which=c(1, 2, 3, 4, 5, 6))
-# plot(results$results, which=c(1, 2, 3, 4))
-
-# library(lattice)
-# xyplot(dataset[, dependent_variable] ~ predict(results$results),
-#        type=c('p', 'g'),
-#        xlab='Predicted', ylab='Actual')
-# 
-# 
-# library(lattice)
-# xyplot(predict(results$results) ~ 1:nrow(dataset),
-#        type=c('p', 'g'),
-#        xlab='Observation Number', ylab='Predicted')
-# 
-# predict(results$results, type='response')
-# contrasts(dataset[, dependent_variable])
-# coefficients(results$results)
-# summary(lm(median_house_value ~ housing_median_age * total_rooms + housing_median_age + total_rooms, data=dataset))
-# # 
-# #interaction_variables <- list(c('housing_median_age', 'total_rooms'), c('total_rooms', 'housing_median_age'))
-# interaction_variables <- list(c('housing_median_age', 'total_rooms'))
-# paste(' ', paste(map_chr(interaction_variables, ~ paste(., collapse =' * ')), collapse = ' + '), '+ ')
-
 
 capture_messages_warnings <- function(func) {
     

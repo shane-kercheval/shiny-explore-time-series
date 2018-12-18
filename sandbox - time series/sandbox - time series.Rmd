@@ -152,6 +152,10 @@ autoplot() +
    # scale_x_date(breaks = date_breaks("5 years"), minor_breaks = date_breaks("1 years"), labels = date_format("%Y")) +
     #theme(axis.text.x = element_text(angle = 30, hjust = 1))
 #    scale_x_yearqtr()
+
+
+min(visnights)
+min(melsyd, na.rm = TRUE)
 ```
 
 ```{r}
@@ -161,7 +165,6 @@ rt_explore_correlations(visnights)
 
 rt_explore_plot_time_series(a10)
 ```
-
 
 ```{r, echo=FALSE}
 #install.packages('fpp2')

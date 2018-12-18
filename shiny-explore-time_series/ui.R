@@ -107,6 +107,12 @@ shinyUI(fluidPage(theme="custom.css",
                     bsCollapsePanel(
                         'Options',
                         uiOutput('var_plots__date_slider__UI'),
+                        numericInput(inputId='var_plots__y_zoom_min',
+                                     label='Y-Axis Zoom Min',
+                                     value=NULL),
+                        numericInput(inputId='var_plots__y_zoom_max',
+                                     label='Y-Axis Zoom Max',
+                                     value=NULL),
                         style='default'
                     ),
                     bsCollapsePanel(

@@ -41,13 +41,19 @@ reactive__var_plots__ggplot__creator <- function(input, session, dataset) {
 
         # reactive data
         local_dataset <- dataset()
+        local_y_zoom_min <- input$var_plots__y_zoom_min
+        local_y_zoom_max <- input$var_plots__y_zoom_max
+        local_ts_variables <- input$var_plots__ts_variables
+
+        # filter on window
         local_start_end <- input$var_plots__date_slider
         local_start_end <- convert_start_end_window(local_dataset, local_start_end)
-        log_message_variable('input$var_plots__date_slider', paste0(local_start_end, collapse='-'))
         local_dataset <- window(local_dataset, start=local_start_end[[1]], end=local_start_end[[2]])
 
 
-        local_ts_variables <- input$var_plots__ts_variables
+        log_message_variable('input$var_plots__date_slider', paste0(local_start_end, collapse='-'))
+        log_message_variable('var_plots__y_zoom_min', local_y_zoom_min)
+        log_message_variable('var_plots__y_zoom_max', local_y_zoom_max)
         log_message_variable('input$var_plots__ts_variables', local_ts_variables)
 # local_annotate_points <- input$var_plots__annotate_points
 # local_base_size <- input$var_plots__base_size
@@ -82,6 +88,23 @@ reactive__var_plots__ggplot__creator <- function(input, session, dataset) {
         } else {
             
             stopifnot(FALSE)
+        }
+
+        # zoom in on graph if either parameter is set
+        if(!is.null(local_dataset) && (!is.na(local_y_zoom_min) || !is.na(local_y_zoom_max))) {
+            # if one of the zooms is specified then we hae to provide both, so get corresponding min/max
+
+            if(is.na(local_y_zoom_min)) {
+
+                local_y_zoom_min <- min(local_dataset, na.rm = TRUE)
+            }
+
+            if(is.na(local_y_zoom_max)) {
+
+                local_y_zoom_max <- max(local_dataset, na.rm = TRUE)
+            }
+
+            ggplot_object <- ggplot_object + coord_cartesian(ylim = c(local_y_zoom_min, local_y_zoom_max))
         }
 
         return (ggplot_object)

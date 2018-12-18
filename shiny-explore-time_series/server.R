@@ -94,10 +94,6 @@ shinyServer(function(input, output, session) {
     reactiveValues__vp__ggplot_message <- reactiveValues(value=NULL)
     output$var_plots__ggplot_messages <- renderPrint__reactiveValues__vp__ggplot_message(reactiveValues__vp__ggplot_message)
 
-    # Viarable Plot - Filters
-    # adds the controls to var_plots__filter_bscollapse__UI
-#output$var_plots__filter_bscollapse__UI <- renderUI__var_plots__filter_bscollapse__UI(filter_controls_list)
-
     # main plot
     output$var_plots <- renderPlot__variable_plot(session,
                                                   reactive__var_plots__ggplot,
