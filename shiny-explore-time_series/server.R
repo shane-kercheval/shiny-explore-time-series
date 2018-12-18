@@ -101,6 +101,15 @@ shinyServer(function(input, output, session) {
     #output$var_plots__variable__UI <- renderUI__var_plots__variable__UI(reactive__source_data)
     observe__var_plots__hide_show_uncollapse_on_dataset_type(session, reactive__source_data)
 
+
+
+    reactive__var_plots__auto_cor__ggplot <- reactive__var_plots__auto_cor__ggplot__creator(input,
+                                                                                            session,
+                                                                                            reactive__var_plots__filtered_data)
+
+    output$var_plots__seasonal <- renderPlot__var_plots__seasonal(session,
+                                                                  reactive__var_plots__auto_cor__ggplot)
+
     ##########################################################################################################
     # Regression Output
     ##########################################################################################################

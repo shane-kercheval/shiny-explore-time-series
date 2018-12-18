@@ -111,6 +111,75 @@ reactive__var_plots__ggplot__creator <- function(input, session, dataset) {
     })
 }
 
+reactive__var_plots__auto_cor__ggplot__creator <- function(input, session, dataset) {
+    reactive({
+
+        req(input$var_plots__date_slider)
+
+        # reactive data
+        local_dataset <- dataset()
+        local_y_zoom_min <- input$var_plots__y_zoom_min
+        local_y_zoom_max <- input$var_plots__y_zoom_max
+        local_ts_variables <- input$var_plots__ts_variables
+
+        # filter on window
+        local_start_end <- input$var_plots__date_slider
+        local_start_end <- convert_start_end_window(local_dataset, local_start_end)
+        local_dataset <- window(local_dataset, start=local_start_end[[1]], end=local_start_end[[2]])
+
+
+        log_message_variable('input$var_plots__date_slider', paste0(local_start_end, collapse='-'))
+        log_message_variable('var_plots__y_zoom_min', local_y_zoom_min)
+        log_message_variable('var_plots__y_zoom_max', local_y_zoom_max)
+        log_message_variable('input$var_plots__ts_variables', local_ts_variables)
+
+        ggplot_object <- NULL
+
+        if(is_single_time_series(local_dataset)) {
+
+            log_message('**single ts**')
+            ggplot_object <- local_dataset %>% ggseasonplot(year.labels=TRUE, year.labels.left=TRUE)
+            
+        } else if (is_multi_time_series(local_dataset)) {
+
+            log_message('**multi ts**')
+
+            if(is.null(local_ts_variables)) {
+
+                ggplot_object <- NULL
+
+            } else {
+
+                local_dataset <- local_dataset[, input$var_plots__ts_variables]
+                ggplot_object <- local_dataset %>% ggseasonplot(year.labels=TRUE, year.labels.left=TRUE)
+            }
+        
+        } else {
+            
+            stopifnot(FALSE)
+        }
+
+        # zoom in on graph if either parameter is set
+        if(!is.null(local_dataset) && (!is.na(local_y_zoom_min) || !is.na(local_y_zoom_max))) {
+            # if one of the zooms is specified then we hae to provide both, so get corresponding min/max
+
+            if(is.na(local_y_zoom_min)) {
+
+                local_y_zoom_min <- min(local_dataset, na.rm = TRUE)
+            }
+
+            if(is.na(local_y_zoom_max)) {
+
+                local_y_zoom_max <- max(local_dataset, na.rm = TRUE)
+            }
+
+            ggplot_object <- ggplot_object + coord_cartesian(ylim = c(local_y_zoom_min, local_y_zoom_max))
+        }
+
+        return (ggplot_object)
+    })
+}
+
 ##############################################################################################################
 # INPUT
 ##############################################################################################################
@@ -190,7 +259,7 @@ renderPlot__variable_plot <- function(session, ggplot_object, messages) {
 
     renderPlot({
 
-        withProgress(value=1/2, message='Plotting Graph',{
+        withProgress(value=1/2, message='Creating Time-Series Graph',{
 
            messages$value <- capture_messages_warnings(function() print(ggplot_object()))
            log_message_variable('messages$value', messages$value)
@@ -202,6 +271,21 @@ renderPlot__variable_plot <- function(session, ggplot_object, messages) {
         session$clientData$output_var_plots_width * 0.66  # set height to % of width
     })
 }
+
+renderPlot__var_plots__seasonal <- function(session, ggplot_object) {
+    renderPlot({
+
+        withProgress(value=1/2, message='Creating Seasonal Graph',{
+
+           print(ggplot_object())
+        })
+
+    }, height = function() {
+
+        session$clientData$output_var_plots_width * 0.66  # set height to % of width
+    })
+}
+
 
 renderPrint__reactiveValues__vp__ggplot_message <- function(message) {
 

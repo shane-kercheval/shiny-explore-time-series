@@ -123,8 +123,18 @@ shinyUI(fluidPage(theme="custom.css",
                 )
             ),
             column(9,
-                plotOutput(outputId='var_plots'),
-                verbatimTextOutput(outputId='var_plots__ggplot_messages')
+                tabsetPanel(type='tabs',
+                    tabPanel("Standard",
+                        plotOutput(outputId='var_plots'),
+                        verbatimTextOutput(outputId='var_plots__ggplot_messages')
+                    ),
+                    tabPanel("Seasonal",
+                        plotOutput(outputId='var_plots__seasonal')
+                    ),
+                    tabPanel("Auto-Correlation",
+                        plotOutput(outputId='var_plots__auto_correlation')
+                    )
+                )
             )
         ),
         tabPanel(
