@@ -15,6 +15,19 @@ is_date_type <- function(x) {
     return (is.Date(x) || is.POSIXct(x) || is.POSIXlt(x))
 }
 
+
+is_single_time_series <- function(x) {
+
+    classes <- class(x)
+    return (length(classes) == 1 && classes == 'ts')
+}
+
+is_multi_time_series <- function(x) {
+
+    classes <- class(x)
+    return (any(classes == 'mts') || any(classes == 'msts'))
+}
+
 null_if_select_variable_optional <- function(value) {
 
     if(is.null(value) || value == select_variable_optional) {

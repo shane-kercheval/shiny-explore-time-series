@@ -100,19 +100,19 @@ shinyUI(fluidPage(theme="custom.css",
             )
         ),
         tabPanel(
-            'Variable Plots',
+            'Plots',
             column(3,
                 class='column-input-control-style',
-
-                bsCollapse(id='var_plots__bscollapse', open='Variables', multiple=TRUE,
+                bsCollapse(id='var_plots__bscollapse', open='Options', multiple=TRUE,
                     bsCollapsePanel(
-                        'Variables',
-                        #uiOutput('var_plots__variable__UI'),
+                        'Options',
+                        uiOutput('var_plots__date_slider__UI'),
                         style='default'
                     ),
                     bsCollapsePanel(
-                        'Filters',
-                        uiOutput('var_plots__filter_bscollapse__UI')
+                        'Variables',
+                        uiOutput('var_plots__ts_variables__UI'),
+                        style='default'
                     )
                 )
             ),

@@ -81,10 +81,14 @@ shinyServer(function(input, output, session) {
     # filters don't have to be reapplied every time; sacrificing memory for speed 
     reactive__var_plots__filtered_data <- reactive__var_plots__filtered_data__creator(input,
                                                                                       reactive__source_data)
+
+    output$var_plots__date_slider__UI <- renderUI__var_plots__date_slider__UI(reactive__var_plots__filtered_data)
+    output$var_plots__ts_variables__UI <- renderUI__var_plots__ts_variables__UI(reactive__var_plots__filtered_data)
     # creates the ggplot object
     reactive__var_plots__ggplot <- reactive__var_plots__ggplot__creator(input,
                                                                         session,
                                                                         reactive__var_plots__filtered_data)
+
     # stores any messages/warnings that ggplot produces when rendering the plot (outputs below the graph
     #(var_plots__ggplot_messages))
     reactiveValues__vp__ggplot_message <- reactiveValues(value=NULL)
@@ -99,7 +103,7 @@ shinyServer(function(input, output, session) {
                                                   reactive__var_plots__ggplot,
                                                   reactiveValues__vp__ggplot_message)
     #output$var_plots__variable__UI <- renderUI__var_plots__variable__UI(reactive__source_data)
-    observe__var_plots__hide_show_uncollapse_on_primary_vars(input, session)
+    observe__var_plots__hide_show_uncollapse_on_dataset_type(session, reactive__source_data)
 
     ##########################################################################################################
     # Regression Output

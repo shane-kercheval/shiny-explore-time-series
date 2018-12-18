@@ -145,12 +145,12 @@ visnights %>%
 #    zoo() %>%
 autoplot() +
     ggtitle('Autoplot') +
-    xlab('Year') +
+    xlab('Year') #+
     #scale_x_discrete(breaks=x_output$timestamp[brks])
     #scale_x_continuous(breaks=2000:2024) 
     #scale_x_date(breaks = date_breaks("year"), labels = date_format("%Y")) +
-    scale_x_date(breaks = date_breaks("5 years"), minor_breaks = date_breaks("1 years"), labels = date_format("%Y")) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+   # scale_x_date(breaks = date_breaks("5 years"), minor_breaks = date_breaks("1 years"), labels = date_format("%Y")) +
+    #theme(axis.text.x = element_text(angle = 30, hjust = 1))
 #    scale_x_yearqtr()
 ```
 
@@ -184,16 +184,35 @@ as.numeric(melsyd[, 'First.Class'])
 class(a10) == 'ts'
 class(melsyd[, 'First.Class']) == 'ts'
 
+as.data.frame()
+
+is_ts <- function(x) {
+    any(class(x) == 'ts')
+}
+temp <- as.data.frame(melsyd) 
+attr(melsyd, "ts_type") <- 'single'
+attr(melsyd, "ts_type")
+
+any(class(melsyd[, 'First.Class']) == 'ts')
+
+
 typeof(a10)
 typeof(melsyd[, 'First.Class'])
 
+start(elecdemand)
+end(elecdemand)
 
 dim(a10)
 dim(melsyd[, 'First.Class'])
 window(melsyd[, 'First.Class'], start=c(1990, 0))
+window(melsyd[, 'First.Class'], start=NULL, end=NULL)
+
+melsyd
 
 
-s <- start(temp[, 1])
+window(melsyd[, 'First.Class'], start=1990, end=NULL)
+
+s <- start(temp)
 e <- end(temp[, 1])
 f <- frequency(temp[, 1])
 ts(as.numeric(temp[, 1]), start=s, end=e, frequency=4)

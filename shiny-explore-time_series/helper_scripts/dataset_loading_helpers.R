@@ -139,6 +139,8 @@ reactive__source_data__creator <- function(input, custom_triggers) {
             }
         })
 
+        
+
         return (loaded_dataset)
     })
 }
@@ -148,12 +150,11 @@ reactive__source_data__creator <- function(input, custom_triggers) {
 ##############################################################################################################
 pretty_dataset <- function(dataset) {
 
-    classes <- class(dataset)
-    if(length(classes) == 1 && classes == 'ts') {
+    if(is_single_time_series(dataset)) {
 
         return (data.frame(date=time(dataset), value=as.matrix(dataset)))
         
-    } else if (any(classes == 'mts') || any(classes == 'msts')) {
+    } else if (is_multi_time_series(dataset)) {
         
         return (cbind(data.frame(date = time(dataset)), as.data.frame(dataset)))
         
