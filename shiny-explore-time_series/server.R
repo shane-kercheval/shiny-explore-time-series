@@ -41,19 +41,6 @@ shinyServer(function(input, output, session) {
     # shows the types of the data's variables/columns
     output$source_data__info <- renderDataTable__source_data__info(reactive__source_data)
     
-    observeEvent(input$source_data__add_date_fields, {
-        # this should trigger a reload of the dataset (perhaps not the best approach, but TBD on alternatives)
-        # however, it shouldn't trigger a reload if it is set back to the default select_variable_optional
-        # which will trigger false positive loadings
-        if(!is.null(reactive__source_data()) &&
-                !is.null(input$source_data__add_date_fields) &&
-                input$source_data__add_date_fields != select_variable_optional &&
-                input$source_data__add_date_fields %in% colnames(reactive__source_data())) {
-
-            custom_triggers$reload_source_data <- runif(1, 1, 1000000)
-        }
-    })
-
     ##########################################################################################################
     # numeric summary data
     ##########################################################################################################
@@ -99,16 +86,12 @@ shinyServer(function(input, output, session) {
                                                   reactiveValues__vp__ggplot_message)
     #output$var_plots__variable__UI <- renderUI__var_plots__variable__UI(reactive__source_data)
     observe__var_plots__hide_show_uncollapse_on_dataset_type(session, reactive__source_data)
-
     reactive__var_plots__season__ggplot <- reactive__var_plots__season__ggplot__creator(input,
                                                                                         reactive__var_plots__filtered_data)
-
     output$var_plots__seasonal <- renderPlot__var_plots__seasonal(session,
                                                                   reactive__var_plots__season__ggplot)
-
     reactive__var_plots__scatter_matrix__ggplot <- reactive__var_plots__scatter_matrix__ggplot__creator(input,
                                                                                                 reactive__var_plots__filtered_data)
-
     output$var_plots__scatter_matrix <- renderPlot__var_plots__scatter_matrix(session,
                                                                               reactive__var_plots__scatter_matrix__ggplot)
     
@@ -118,62 +101,14 @@ shinyServer(function(input, output, session) {
     # specifically, we cannot endanger immediately after a new dataset is loaded (value will be set to 0 when
     # loading), but but we can endanger after the first time i.e. the second time i.e. index >=1
     reactiveValues__vp_can_endanger_variables <- reactiveValues(index=0)
-    observeEvent(reactive__source_data(), ({
 
-        # when the source is updated, set the endanger index back to zero
-        reactiveValues__vp_can_endanger_variables$index <- 0
+    observeEvent__var_plots__variables_collapse(session,
+                                                reactive__source_data,
+                                                reactiveValues__vp_can_endanger_variables)
+    observeEvent__var_plots__variables_toggle(session, input, reactive__var_plots__filtered_data)
+    observeEvent__var_plots__variables_apply(session, input)
+    observeEvent__var_plots__variables_endager(session, input, reactiveValues__vp_can_endanger_variables)
 
-        if(is_single_time_series(reactive__source_data())) {
-
-            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'default'))
-
-        } else {
-
-            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'success'))
-        }
-    }))
-
-    observeEvent(input$var_plots__variables_toggle, ({
-        
-        local_variables <- isolate(input$var_plots__ts_variables)
-        local_dataset <- isolate(reactive__var_plots__filtered_data())
-        # if none selected, select all, otherwise (if any selected); unselect all
-        if(length(local_variables) == 0) {
-
-            column_names <- colnames(as.data.frame(local_dataset) %>% select_if(is.numeric))
-            updateCheckboxGroupInput(session=session,
-                                     inputId='var_plots__ts_variables',
-                                     selected=column_names)
-        } else {
-
-            updateCheckboxGroupInput(session=session,
-                                     inputId='var_plots__ts_variables',
-                                     selected=character(0))
-
-            # seems like a bug, updateCheckboxGroupInput doesn't trigger observeEvent for var_plots__ts_variables
-            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'danger'))
-        }
-    }))
-
-    observeEvent(input$var_plots__variables_apply, ({
-
-        updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'success'))
-
-    }))
-
-    observeEvent(input$var_plots__ts_variables, ({
-
-        local_endager_index <- isolate(reactiveValues__vp_can_endanger_variables$index)
-        log_message_variable('reactiveValues__vp_can_endanger_variables$index', local_endager_index)
-
-        if(local_endager_index >= 1) {
-
-            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'danger'))
-        }
-
-        reactiveValues__vp_can_endanger_variables$index <- local_endager_index + 1
-
-    }))
     ##########################################################################################################
     # Regression Output
     ##########################################################################################################

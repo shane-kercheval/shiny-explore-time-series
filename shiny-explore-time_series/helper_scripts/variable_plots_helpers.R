@@ -163,7 +163,6 @@ reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset)
     })
 }
 
-
 ##############################################################################################################
 # INPUT
 ##############################################################################################################
@@ -206,21 +205,6 @@ renderUI__var_plots__ts_variables__UI <- function(dataset) {
         }
     })
 }
-
-
-# renderUI__var_plots__variable__UI <- function(dataset) {
-
-#     renderUI({
-#         selectInput(inputId='var_plots__variable',
-#                     label = 'Variable',
-#                     choices = c(select_variable, colnames(dataset())),
-#                     selected = select_variable,
-#                     multiple = FALSE,
-#                     selectize = TRUE,
-#                     width = 500,
-#                     size = NULL)
-#     })
-# }
 
 observe__var_plots__hide_show_uncollapse_on_dataset_type <- function(session, dataset) {
     observeEvent(dataset(), {
@@ -296,3 +280,73 @@ renderPrint__reactiveValues__vp__ggplot_message <- function(message) {
     })
 }
 
+##############################################################################################################
+# UI updates
+##############################################################################################################
+observeEvent__var_plots__variables_collapse <- function(session, dataset, reactive_values) {
+
+    observeEvent(dataset(), ({
+
+        # when the source is updated, set the endanger index back to zero
+        reactive_values$index <- 0
+
+        if(is_single_time_series(dataset())) {
+
+            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'default'))
+
+        } else {
+
+            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'success'))
+        }
+    }))
+}
+
+observeEvent__var_plots__variables_toggle <- function(session, input, dataset) {
+
+    observeEvent(input$var_plots__variables_toggle, ({
+        
+        local_variables <- isolate(input$var_plots__ts_variables)
+        local_dataset <- isolate(dataset())
+        # if none selected, select all, otherwise (if any selected); unselect all
+        if(length(local_variables) == 0) {
+
+            column_names <- colnames(as.data.frame(local_dataset) %>% select_if(is.numeric))
+            updateCheckboxGroupInput(session=session,
+                                     inputId='var_plots__ts_variables',
+                                     selected=column_names)
+        } else {
+
+            updateCheckboxGroupInput(session=session,
+                                     inputId='var_plots__ts_variables',
+                                     selected=character(0))
+
+            # seems like a bug, updateCheckboxGroupInput doesn't trigger observeEvent for var_plots__ts_variables
+            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'danger'))
+        }
+    }))
+}
+
+observeEvent__var_plots__variables_apply <- function(session, input) {
+    
+    observeEvent(input$var_plots__variables_apply, ({
+
+        updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'success'))
+
+    }))
+}
+
+observeEvent__var_plots__variables_endager <- function(session, input, reactive_endager_values) {
+
+    observeEvent(input$var_plots__ts_variables, ({
+
+        local_endager_index <- isolate(reactive_endager_values$index)
+        log_message_variable('reactiveValues__vp_can_endanger_variables$index', local_endager_index)
+
+        if(local_endager_index >= 1) {
+
+            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'danger'))
+        }
+
+        reactive_endager_values$index <- local_endager_index + 1
+    }))
+}

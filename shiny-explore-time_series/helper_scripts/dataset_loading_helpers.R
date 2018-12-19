@@ -14,12 +14,10 @@ reactive__source_data__creator <- function(input, custom_triggers) {
             # reactive data
             upload_file_path <- input$uploadFile$datapath
             local_preloaded_dataset <- input$preloaded_dataset
-            local_add_date_column <- isolate(input$source_data__add_date_fields)
 
             log_message_block_start('Loading Dataset')
             log_message_variable('input$uploadFile$datapath', upload_file_path)
             log_message_variable('input$preloaded_dataset', local_preloaded_dataset)
-            log_message_variable('input$source_data__add_date_fields', local_add_date_column)
 
             loaded_dataset <- NULL
 
@@ -94,47 +92,6 @@ reactive__source_data__creator <- function(input, custom_triggers) {
                     showModal(
                         modalDialog(title = 'Unknown File Type',
                                     'Only `.csv` and `.RDS` files are supported at this time.'))
-                }
-            }
-
-            if(!is.null(loaded_dataset) &&
-                    !is.null(local_add_date_column) &&
-                    local_add_date_column != select_variable_optional &&
-                    local_add_date_column %in% colnames(loaded_dataset)) {
-
-                log_message('Adding date fields...')
-
-                if(is.numeric(loaded_dataset[, local_add_date_column])) {
-
-                    log_message('Adding date fields...numeric')
-                    is_invalid <- TRUE
-
-                } else {
-
-                    is_invalid <- tryCatch({
-
-                        log_message('Adding date fields...tryCatch()')
-                        (all(is.na(lubridate::as_date(loaded_dataset[, local_add_date_column]))))
-
-                    }, error = function(error_condition) {
-
-                        log_message(paste('Adding date fields...ERROR CONVERTING', local_add_date_column, 'TO DATE'))                    
-                        TRUE
-                    })
-                }
-
-                log_message_variable('Adding date fields...is_invalid', is_invalid)
-
-                if(is_invalid) {
-
-                    showModal(
-                        modalDialog(title = 'Cannot Convert to Date',
-                                    paste0('Cannot convert `', local_add_date_column, '` to a date.')))
-                    
-                } else {
-
-                    loaded_dataset <- cbind(loaded_dataset,
-                                    rt_get_date_fields(date_vector = loaded_dataset[, local_add_date_column]))
                 }
             }
         })
