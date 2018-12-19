@@ -117,6 +117,14 @@ shinyUI(fluidPage(theme="custom.css",
                     ),
                     bsCollapsePanel(
                         'Variables',
+                        fluidRow(
+                            column(4,
+                                tags$div(style='margin-bottom: 20px;', actionButton(inputId='var_plots__variables_apply', label='Apply'))
+                            ),
+                            column(8,
+                                tags$div(style='margin-bottom: 20px;', actionButton(inputId='var_plots__variables_toggle', label='Toggle'))
+                            )
+                        ),
                         uiOutput('var_plots__ts_variables__UI'),
                         style='default'
                     )
@@ -129,7 +137,19 @@ shinyUI(fluidPage(theme="custom.css",
                         verbatimTextOutput(outputId='var_plots__ggplot_messages')
                     ),
                     tabPanel("Seasonal",
+                        tags$br(),
+                         selectInput(width=NULL,
+                                inputId='var_plots__season_plot_type',
+                                label='Plot Type:',
+                                choices=c('Standard',
+                                          'Polar',
+                                          'Sub-series'),
+                                selected='Standard'),
+                        tags$br(),
                         plotOutput(outputId='var_plots__seasonal')
+                    ),
+                    tabPanel("Scatter Matrix",
+                        plotOutput(outputId='var_plots__scatter_matrix')
                     ),
                     tabPanel("Auto-Correlation",
                         plotOutput(outputId='var_plots__auto_correlation')

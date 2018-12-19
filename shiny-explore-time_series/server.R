@@ -86,7 +86,6 @@ shinyServer(function(input, output, session) {
     output$var_plots__ts_variables__UI <- renderUI__var_plots__ts_variables__UI(reactive__var_plots__filtered_data)
     # creates the ggplot object
     reactive__var_plots__ggplot <- reactive__var_plots__ggplot__creator(input,
-                                                                        session,
                                                                         reactive__var_plots__filtered_data)
 
     # stores any messages/warnings that ggplot produces when rendering the plot (outputs below the graph
@@ -101,15 +100,80 @@ shinyServer(function(input, output, session) {
     #output$var_plots__variable__UI <- renderUI__var_plots__variable__UI(reactive__source_data)
     observe__var_plots__hide_show_uncollapse_on_dataset_type(session, reactive__source_data)
 
-
-
-    reactive__var_plots__auto_cor__ggplot <- reactive__var_plots__auto_cor__ggplot__creator(input,
-                                                                                            session,
-                                                                                            reactive__var_plots__filtered_data)
+    reactive__var_plots__season__ggplot <- reactive__var_plots__season__ggplot__creator(input,
+                                                                                        reactive__var_plots__filtered_data)
 
     output$var_plots__seasonal <- renderPlot__var_plots__seasonal(session,
-                                                                  reactive__var_plots__auto_cor__ggplot)
+                                                                  reactive__var_plots__season__ggplot)
 
+    reactive__var_plots__scatter_matrix__ggplot <- reactive__var_plots__scatter_matrix__ggplot__creator(input,
+                                                                                                reactive__var_plots__filtered_data)
+
+    output$var_plots__scatter_matrix <- renderPlot__var_plots__scatter_matrix(session,
+                                                                              reactive__var_plots__scatter_matrix__ggplot)
+    
+    # need a reactive value to know whether or not I can set the style of the Variables bsCollapsePanel to 
+    # 'danger', because it is scheduled to do so when the variables checkboxlist is updated, which happens
+    # after a new dataset is loaded (and we don't want to "endanger" since that is expected)
+    # specifically, we cannot endanger immediately after a new dataset is loaded (value will be set to 0 when
+    # loading), but but we can endanger after the first time i.e. the second time i.e. index >=1
+    reactiveValues__vp_can_endanger_variables <- reactiveValues(index=0)
+    observeEvent(reactive__source_data(), ({
+
+        # when the source is updated, set the endanger index back to zero
+        reactiveValues__vp_can_endanger_variables$index <- 0
+
+        if(is_single_time_series(reactive__source_data())) {
+
+            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'default'))
+
+        } else {
+
+            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'success'))
+        }
+    }))
+
+    observeEvent(input$var_plots__variables_toggle, ({
+        
+        local_variables <- isolate(input$var_plots__ts_variables)
+        local_dataset <- isolate(reactive__var_plots__filtered_data())
+        # if none selected, select all, otherwise (if any selected); unselect all
+        if(length(local_variables) == 0) {
+
+            column_names <- colnames(as.data.frame(local_dataset) %>% select_if(is.numeric))
+            updateCheckboxGroupInput(session=session,
+                                     inputId='var_plots__ts_variables',
+                                     selected=column_names)
+        } else {
+
+            updateCheckboxGroupInput(session=session,
+                                     inputId='var_plots__ts_variables',
+                                     selected=character(0))
+
+            # seems like a bug, updateCheckboxGroupInput doesn't trigger observeEvent for var_plots__ts_variables
+            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'danger'))
+        }
+    }))
+
+    observeEvent(input$var_plots__variables_apply, ({
+
+        updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'success'))
+
+    }))
+
+    observeEvent(input$var_plots__ts_variables, ({
+
+        local_endager_index <- isolate(reactiveValues__vp_can_endanger_variables$index)
+        log_message_variable('reactiveValues__vp_can_endanger_variables$index', local_endager_index)
+
+        if(local_endager_index >= 1) {
+
+            updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'danger'))
+        }
+
+        reactiveValues__vp_can_endanger_variables$index <- local_endager_index + 1
+
+    }))
     ##########################################################################################################
     # Regression Output
     ##########################################################################################################
