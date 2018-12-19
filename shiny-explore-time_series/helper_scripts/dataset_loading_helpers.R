@@ -96,8 +96,6 @@ reactive__source_data__creator <- function(input, custom_triggers) {
             }
         })
 
-        
-
         return (loaded_dataset)
     })
 }
