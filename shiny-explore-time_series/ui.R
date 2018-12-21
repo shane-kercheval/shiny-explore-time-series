@@ -32,7 +32,11 @@ shinyUI(fluidPage(theme="custom.css",
                                                     'Daily Closing Stock Prices of Google Inc (All)',
                                                     'Daily Closing Stock Prices of Google Inc (200)',
                                                     'Price of dozen eggs in US, 1900–1993, in constant dollars.',
-                                                    '% Changes in Consumption/Income/Production?Savings/Unemployment Rates for the US, 1960 to 2016.'),
+                                                    '% Changes in Consumption/Income/Production?Savings/Unemployment Rates for the US, 1960 to 2016.',
+                                                    'Australian Monthly Gas Production',
+                                                    'Daily Morning Gold Prices',
+                                                    'Quarterly Production of Woollen Yarn in Australia',
+                                                    'Dow-Jones index on 251 trading days ending 26 Aug 1994.'),
                                           selected='Anti-Diabetic Drug Sales in Australia from 1991 to 2008'))
                 ),
                 tabPanel(

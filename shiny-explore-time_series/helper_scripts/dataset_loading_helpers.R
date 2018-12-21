@@ -74,7 +74,22 @@ reactive__source_data__creator <- function(input, custom_triggers) {
                 } else if (local_preloaded_dataset == '% Changes in Consumption/Income/Production?Savings/Unemployment Rates for the US, 1960 to 2016.') {
 
                     loaded_dataset <- uschange
+                
+                } else if (local_preloaded_dataset == 'Australian Monthly Gas Production') {
 
+                    loaded_dataset <- gas
+                
+                } else if (local_preloaded_dataset == 'Daily Morning Gold Prices') {
+
+                    loaded_dataset <- gold
+                
+                } else if (local_preloaded_dataset == 'Quarterly Production of Woollen Yarn in Australia') {
+
+                    loaded_dataset <- woolyrnq
+                
+                } else if (local_preloaded_dataset == 'Dow-Jones index on 251 trading days ending 26 Aug 1994.') {
+
+                    loaded_dataset <- dj
                 }
 
             } else {
