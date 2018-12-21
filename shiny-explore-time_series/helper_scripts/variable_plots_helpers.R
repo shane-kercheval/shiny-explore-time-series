@@ -70,6 +70,27 @@ helper_create_time_series_graph <- function(input, dataset, type) {
 
             plot_object <- dataset %>% as.data.frame() %>% GGally::ggpairs()
 
+        } else if(type == 'auto-correlation') {
+
+            if(is_multi_time_series(dataset)) {
+
+                plot_object <- NULL
+                shinyjs::hide('var_plots__auto_correlation_lags')
+
+            } else {
+
+                shinyjs::show('var_plots__auto_correlation_lags')
+
+                lags <- NULL
+                if(!is.na(input$var_plots__auto_correlation_lags)) {
+
+                    lags <- input$var_plots__auto_correlation_lags
+                }
+
+                log_message_variable('input$var_plots__auto_correlation_lags', lags)
+                plot_object <- dataset %>% ggAcf(lag=lags)
+
+            }
         } else {
 
             stopifnot(FALSE)
@@ -163,6 +184,13 @@ reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset)
     })
 }
 
+reactive__var_plots__auto_correlation__ggplot__creator <- function(input, dataset) {
+    
+    reactive({
+        return (helper_create_time_series_graph(input, dataset, type='auto-correlation'))
+    })
+}
+
 ##############################################################################################################
 # INPUT
 ##############################################################################################################
@@ -202,24 +230,6 @@ renderUI__var_plots__ts_variables__UI <- function(dataset) {
         } else {
 
             return (NULL)
-        }
-    })
-}
-
-observe__var_plots__hide_show_uncollapse_on_dataset_type <- function(session, dataset) {
-    observeEvent(dataset(), {
-
-        if(is_multi_time_series(dataset())) {
-
-            shinyjs::show('var_plots__variables_apply')
-            shinyjs::show('var_plots__variables_toggle')
-            updateCollapse(session, 'var_plots__bscollapse', open='Variables')
-
-        } else {
-
-            updateCollapse(session, 'var_plots__bscollapse', close='Variables')
-            shinyjs::hide('var_plots__variables_apply')
-            shinyjs::hide('var_plots__variables_toggle')
         }
     })
 }
@@ -272,6 +282,20 @@ renderPlot__var_plots__scatter_matrix <- function(session, ggplot_object) {
     })
 }
 
+renderPlot__var_plots__auto_correlation <- function(session, ggplot_object) {
+    renderPlot({
+
+        withProgress(value=1/2, message='Creating Auto-Correlation Graph',{
+
+           print(ggplot_object())
+        })
+
+    }, height = function() {
+
+        300
+        #session$clientData$output_var_plots_width * 0.66  # set height to % of width
+    })
+}
 
 renderPrint__reactiveValues__vp__ggplot_message <- function(message) {
 
@@ -283,6 +307,24 @@ renderPrint__reactiveValues__vp__ggplot_message <- function(message) {
 ##############################################################################################################
 # UI updates
 ##############################################################################################################
+observe__var_plots__hide_show_uncollapse_on_dataset_type <- function(session, dataset) {
+    observeEvent(dataset(), {
+
+        if(is_multi_time_series(dataset())) {
+
+            shinyjs::show('var_plots__variables_apply')
+            shinyjs::show('var_plots__variables_toggle')
+            updateCollapse(session, 'var_plots__bscollapse', open='Variables')
+            
+        } else {
+
+            updateCollapse(session, 'var_plots__bscollapse', close='Variables')
+            shinyjs::hide('var_plots__variables_apply')
+            shinyjs::hide('var_plots__variables_toggle')
+        }
+    })
+}
+
 observeEvent__var_plots__variables_collapse <- function(session, dataset, reactive_values) {
 
     observeEvent(dataset(), ({

@@ -134,7 +134,11 @@ shinyUI(fluidPage(theme="custom.css",
                 tabsetPanel(type='tabs',
                     tabPanel("Standard",
                         plotOutput(outputId='var_plots'),
-                        verbatimTextOutput(outputId='var_plots__ggplot_messages')
+                        verbatimTextOutput(outputId='var_plots__ggplot_messages'),
+                        numericInput(inputId='var_plots__auto_correlation_lags',
+                                     label='# of Auto-Correlation Lags',
+                                     value=NULL),
+                        plotOutput(outputId='var_plots__auto_correlation')
                     ),
                     tabPanel("Seasonal",
                         tags$br(),
@@ -150,9 +154,6 @@ shinyUI(fluidPage(theme="custom.css",
                     ),
                     tabPanel("Scatter Matrix",
                         plotOutput(outputId='var_plots__scatter_matrix')
-                    ),
-                    tabPanel("Auto-Correlation",
-                        plotOutput(outputId='var_plots__auto_correlation')
                     )
                 )
             )

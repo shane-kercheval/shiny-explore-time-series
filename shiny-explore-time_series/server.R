@@ -12,6 +12,7 @@ library(tidyverse)
 library(scales)
 library(lattice)
 library(lubridate)
+library(forecast)
 
 source('helper_scripts/definitions.R')
 source('helper_scripts/logging_functions.R')
@@ -94,6 +95,12 @@ shinyServer(function(input, output, session) {
                                                                                                 reactive__var_plots__filtered_data)
     output$var_plots__scatter_matrix <- renderPlot__var_plots__scatter_matrix(session,
                                                                               reactive__var_plots__scatter_matrix__ggplot)
+    
+    reactive__var_plots__auto_correlation__ggplot <- reactive__var_plots__auto_correlation__ggplot__creator(input,
+                                                                                                            reactive__var_plots__filtered_data)
+    output$var_plots__auto_correlation <- renderPlot__var_plots__auto_correlation(session,
+                                                                                  reactive__var_plots__auto_correlation__ggplot)
+    
     
     # need a reactive value to know whether or not I can set the style of the Variables bsCollapsePanel to 
     # 'danger', because it is scheduled to do so when the variables checkboxlist is updated, which happens
