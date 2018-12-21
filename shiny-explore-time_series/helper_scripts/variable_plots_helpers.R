@@ -49,7 +49,7 @@ helper_create_time_series_graph <- function(input, dataset, type) {
 
         if(type == 'time-series') {
 
-            plot_object <- dataset %>% autoplot()
+            plot_object <- dataset %>% autoplot(facets=input$var_plots__facet)
 
         } else if(type == 'season') {
 
@@ -309,6 +309,7 @@ observe__var_plots__hide_show_uncollapse_on_dataset_type <- function(session, da
 
             shinyjs::show('var_plots__variables_apply')
             shinyjs::show('var_plots__variables_toggle')
+            shinyjs::show('var_plots__facet')
             updateCollapse(session, 'var_plots__bscollapse', open='Variables')
             
         } else {
@@ -316,6 +317,7 @@ observe__var_plots__hide_show_uncollapse_on_dataset_type <- function(session, da
             updateCollapse(session, 'var_plots__bscollapse', close='Variables')
             shinyjs::hide('var_plots__variables_apply')
             shinyjs::hide('var_plots__variables_toggle')
+            shinyjs::hide('var_plots__facet')
         }
     })
 }

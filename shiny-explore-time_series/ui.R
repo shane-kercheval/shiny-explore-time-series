@@ -113,6 +113,8 @@ shinyUI(fluidPage(theme="custom.css",
                         numericInput(inputId='var_plots__y_zoom_max',
                                      label='Y-Axis Zoom Max',
                                      value=NULL),
+                        checkboxInput(inputId='var_plots__facet',
+                                      label='Seperate Axes', value=FALSE, width=NULL),
                         style='default'
                     ),
                     bsCollapsePanel(
