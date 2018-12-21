@@ -254,47 +254,42 @@ renderPlot__variable_plot <- function(session, ggplot_object, messages) {
     })
 }
 
-renderPlot__var_plots__seasonal <- function(session, ggplot_object) {
+renderPlot__var_plots__helper <- function(session, ggplot_object, message, width_function) {
+
     renderPlot({
 
-        withProgress(value=1/2, message='Creating Seasonal Graph',{
+        withProgress(value=1/2, message=message,{
 
            print(ggplot_object())
         })
 
     }, height = function() {
 
-        session$clientData$output_var_plots_width * 0.66  # set height to % of width
+        width_function()
     })
+}
+
+renderPlot__var_plots__seasonal <- function(session, ggplot_object) {
+
+    return(renderPlot__var_plots__helper(session,
+                                         ggplot_object,
+                                         'Creating Seasonal Graph',
+                                         function() { session$clientData$output_var_plots_width * 0.66 }))
 }
 
 renderPlot__var_plots__scatter_matrix <- function(session, ggplot_object) {
-    renderPlot({
 
-        withProgress(value=1/2, message='Creating Scatter Matrix Graph',{
-
-           print(ggplot_object())
-        })
-
-    }, height = function() {
-
-        session$clientData$output_var_plots_width * 0.66  # set height to % of width
-    })
+    return(renderPlot__var_plots__helper(session,
+                                         ggplot_object,
+                                         'Creating Scatter Matrix Graph',
+                                         function() { session$clientData$output_var_plots_width * 0.66 }))
 }
 
 renderPlot__var_plots__auto_correlation <- function(session, ggplot_object) {
-    renderPlot({
-
-        withProgress(value=1/2, message='Creating Auto-Correlation Graph',{
-
-           print(ggplot_object())
-        })
-
-    }, height = function() {
-
-        300
-        #session$clientData$output_var_plots_width * 0.66  # set height to % of width
-    })
+    return(renderPlot__var_plots__helper(session,
+                                         ggplot_object,
+                                         'Creating Auto-Correlation Graph',
+                                         function() { 300 }))
 }
 
 renderPrint__reactiveValues__vp__ggplot_message <- function(message) {
