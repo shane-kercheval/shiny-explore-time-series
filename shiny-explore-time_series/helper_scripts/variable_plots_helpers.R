@@ -6,7 +6,43 @@ reactive__var_plots__filtered_data__creator <- function(input, dataset) {
 
     reactive({
 
+        req(input$var_plots__date_slider)
+        input$var_plots__variables_apply  # trigger update from apply, not from selecting the variables
+
         local_dataset <- dataset()  # clear on new datasets
+
+        # filter on window
+        local_start_end <- input$var_plots__date_slider
+        local_start_end <- convert_start_end_window(local_dataset, local_start_end)
+        local_dataset <- window(local_dataset, start=local_start_end[[1]], end=local_start_end[[2]])
+        log_message_variable('input$var_plots__date_slider', paste0(local_start_end, collapse='-'))
+
+        if(is_single_time_series(local_dataset)) {
+
+            log_message('**single ts**')
+            
+        } else if (is_multi_time_series(local_dataset)) {
+
+            log_message('**multi ts**')
+
+            local_ts_variables <- isolate(input$var_plots__ts_variables)  # don't update when selecting variables
+            log_message_variable('input$var_plots__ts_variables', local_ts_variables)
+
+
+            if(is.null(local_ts_variables)) {
+
+                local_dataset <- NULL
+
+            } else {
+
+                local_dataset <- local_dataset[, local_ts_variables]
+            }
+        
+        } else {
+            
+            stopifnot(FALSE)
+        }
+
         return (local_dataset)
     })
 }
@@ -35,10 +71,6 @@ convert_start_end_window <- function(dataset, start_end_window) {
 }
 
 helper_create_time_series_graph <- function(input, dataset, type) {
-
-    req(input$var_plots__date_slider)
-
-    input$var_plots__variables_apply  # trigger update from apply, not from selecting the variables
 
     custom_plot <- function(dataset) {
 
@@ -120,63 +152,34 @@ helper_create_time_series_graph <- function(input, dataset, type) {
     local_dataset <- dataset()
     local_y_zoom_min <- input$var_plots__y_zoom_min
     local_y_zoom_max <- input$var_plots__y_zoom_max
-    local_ts_variables <- isolate(input$var_plots__ts_variables)  # don't update when selecting variables
-
-    # filter on window
-    local_start_end <- input$var_plots__date_slider
-    local_start_end <- convert_start_end_window(local_dataset, local_start_end)
-    local_dataset <- window(local_dataset, start=local_start_end[[1]], end=local_start_end[[2]])
-
-
-    log_message_variable('input$var_plots__date_slider', paste0(local_start_end, collapse='-'))
+    
     log_message_variable('var_plots__y_zoom_min', local_y_zoom_min)
     log_message_variable('var_plots__y_zoom_max', local_y_zoom_max)
-    log_message_variable('input$var_plots__ts_variables', local_ts_variables)
 
 
     ggplot_object <- NULL
 
-    if(is_single_time_series(local_dataset)) {
+    if(!is.null(local_dataset)) {
 
-        log_message('**single ts**')
         ggplot_object <- local_dataset %>% custom_plot()
-        
-    } else if (is_multi_time_series(local_dataset)) {
 
-        log_message('**multi ts**')
+         # zoom in on graph if either parameter is set and it's not an auto-correlation plot
+        if((!is.na(local_y_zoom_min) || !is.na(local_y_zoom_max)) && type != 'auto-correlation') {
 
-        if(is.null(local_ts_variables)) {
+            # if one of the zooms is specified then we hae to provide both, so get corresponding min/max
+            if(is.na(local_y_zoom_min)) {
 
-            ggplot_object <- NULL
+                local_y_zoom_min <- min(local_dataset, na.rm = TRUE)
+            }
 
-        } else {
+            if(is.na(local_y_zoom_max)) {
 
-            local_dataset <- local_dataset[, local_ts_variables]
-            ggplot_object <- local_dataset %>% custom_plot()
-        }
-    
-    } else {
-        
-        stopifnot(FALSE)
-    }
+                local_y_zoom_max <- max(local_dataset, na.rm = TRUE)
+            }
 
-    # zoom in on graph if either parameter is set
-    if(!is.null(local_dataset) && 
-        (!is.na(local_y_zoom_min) || !is.na(local_y_zoom_max)) &&
-        type != 'auto-correlation') {
-        # if one of the zooms is specified then we hae to provide both, so get corresponding min/max
-
-        if(is.na(local_y_zoom_min)) {
-
-            local_y_zoom_min <- min(local_dataset, na.rm = TRUE)
+            ggplot_object <- ggplot_object + coord_cartesian(ylim = c(local_y_zoom_min, local_y_zoom_max))
         }
 
-        if(is.na(local_y_zoom_max)) {
-
-            local_y_zoom_max <- max(local_dataset, na.rm = TRUE)
-        }
-
-        ggplot_object <- ggplot_object + coord_cartesian(ylim = c(local_y_zoom_min, local_y_zoom_max))
     }
 
     return (ggplot_object)

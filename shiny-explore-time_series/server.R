@@ -70,8 +70,8 @@ shinyServer(function(input, output, session) {
     reactive__var_plots__filtered_data <- reactive__var_plots__filtered_data__creator(input,
                                                                                       reactive__source_data)
 
-    output$var_plots__date_slider__UI <- renderUI__var_plots__date_slider__UI(reactive__var_plots__filtered_data)
-    output$var_plots__ts_variables__UI <- renderUI__var_plots__ts_variables__UI(reactive__var_plots__filtered_data)
+    output$var_plots__date_slider__UI <- renderUI__var_plots__date_slider__UI(reactive__source_data)
+    output$var_plots__ts_variables__UI <- renderUI__var_plots__ts_variables__UI(reactive__source_data)
     # creates the ggplot object
     reactive__var_plots__ggplot <- reactive__var_plots__ggplot__creator(input,
                                                                         reactive__var_plots__filtered_data)
@@ -101,7 +101,16 @@ shinyServer(function(input, output, session) {
     output$var_plots__auto_correlation <- renderPlot__var_plots__auto_correlation(session,
                                                                                   reactive__var_plots__auto_correlation__ggplot)
     
-    
+    # observe update UI (i.e. seperate out UI changes from creating the plot in `helper_create_time_series_graph()`)
+    # observe({
+    #     req(reactive__var_plots__filtered_data)
+
+    #     input$var_plots__variables_apply  # trigger update from apply, not from selecting the variables
+    # })
+
+
+
+
     # need a reactive value to know whether or not I can set the style of the Variables bsCollapsePanel to 
     # 'danger', because it is scheduled to do so when the variables checkboxlist is updated, which happens
     # after a new dataset is loaded (and we don't want to "endanger" since that is expected)
@@ -112,7 +121,7 @@ shinyServer(function(input, output, session) {
     observeEvent__var_plots__variables_collapse(session,
                                                 reactive__source_data,
                                                 reactiveValues__vp_can_endanger_variables)
-    observeEvent__var_plots__variables_toggle(session, input, reactive__var_plots__filtered_data)
+    observeEvent__var_plots__variables_toggle(session, input, reactive__source_data)
     observeEvent__var_plots__variables_apply(session, input)
     observeEvent__var_plots__variables_endager(session, input, reactiveValues__vp_can_endanger_variables)
 
