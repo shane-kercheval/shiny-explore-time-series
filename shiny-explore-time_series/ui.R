@@ -100,7 +100,9 @@ shinyUI(fluidPage(theme="custom.css",
                     )
             ),
             column(10,
-                   plotOutput(outputId='correlation__plot')
+                   plotOutput(outputId='correlation__plot'),
+                   tags$p('For multi-variable time-series data, this graph shows the correlation coefficients for each pair of variables.'),
+                   tags$p('Correlation is a measure of strength of the *linear* relationship between two variables, and can sometimes be misleading for non-linear relationships. The correlation coefficients lie between -1 and 1.')
             )
         ),
         tabPanel(
@@ -144,22 +146,32 @@ shinyUI(fluidPage(theme="custom.css",
                         numericInput(inputId='var_plots__auto_correlation_lags',
                                      label='# of Auto-Correlation Lags',
                                      value=NULL),
-                        plotOutput(outputId='var_plots__auto_correlation')
+                        plotOutput(outputId='var_plots__auto_correlation'),
+                        tags$div(id='autocorrelation_explanation',
+                            tags$p('This graph (correlogram) shows the autocorrelation coefficients (or Autocorrelation Function, ACF) for each corresponding lagged value.'),
+                            tags$p('Autocorrelation is a measure between the linear relationship between the lagged values and the original values of the time-series.'),
+                            tags$p('"When data have a trend, the autocorrelations for small lags tend to be large and positive because observations nearby in time are also nearby in size. So the ACF of trended time series tend to have positive values that slowly decrease as the lags increase.'),
+                            tags$p('When data area seasonal, the autocorrelations will be larger for the seaonal lags (at multiples of the seaonal frequency) than for other lags.'),
+                            tags$p('Time series that show no autocorrelation are called `white noise`." - Forecasting Principles and Practice')
+                        )
                     ),
                     tabPanel("Seasonal",
                         tags$br(),
-                         selectInput(width=NULL,
-                                inputId='var_plots__season_plot_type',
-                                label='Plot Type:',
-                                choices=c('Standard',
-                                          'Polar',
-                                          'Sub-series'),
-                                selected='Standard'),
+                        selectInput(width=NULL,
+                                    inputId='var_plots__season_plot_type',
+                                    label='Plot Type:',
+                                    choices=c('Standard',
+                                              'Polar',
+                                              'Sub-series'),
+                                    selected='Standard'),
                         tags$br(),
-                        plotOutput(outputId='var_plots__seasonal')
+                        plotOutput(outputId='var_plots__seasonal'),
+                        tags$p('For single-variable time-series data, these graphs show the data plotted against individual seasons.')
                     ),
                     tabPanel("Scatter Matrix",
-                        plotOutput(outputId='var_plots__scatter_matrix')
+                        plotOutput(outputId='var_plots__scatter_matrix'),
+                        tags$p('For multi-variable time-series data, this graph shows a scatterplot and correlation coefficients for each pair of variables.'),
+                        tags$p('Correlation is a measure of strength of the *linear* relationship between two variables, and can sometimes be misleading for non-linear relationships. The correlation coefficients lie between -1 and 1.')
                     )
                 )
             )

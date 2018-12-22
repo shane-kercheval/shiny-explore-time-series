@@ -53,33 +53,50 @@ helper_create_time_series_graph <- function(input, dataset, type) {
 
         } else if(type == 'season') {
 
-            if(input$var_plots__season_plot_type == 'Polar') {
+            if(is_multi_time_series(dataset)) {
 
-                plot_object <- dataset %>%  ggseasonplot(polar=TRUE)
-
-            } else if(input$var_plots__season_plot_type == 'Sub-series') {
-
-                plot_object <- dataset %>% ggsubseriesplot()
+                plot_object <- NULL
+                shinyjs::hide('var_plots__season_plot_type')
 
             } else {
 
-                plot_object <- dataset %>% ggseasonplot(year.labels=TRUE, year.labels.left=TRUE)
-            }
+                shinyjs::show('var_plots__season_plot_type')
 
+                if(input$var_plots__season_plot_type == 'Polar') {
+
+                    plot_object <- dataset %>%  ggseasonplot(polar=TRUE)
+
+                } else if(input$var_plots__season_plot_type == 'Sub-series') {
+
+                    plot_object <- dataset %>% ggsubseriesplot()
+
+                } else {
+
+                    plot_object <- dataset %>% ggseasonplot(year.labels=TRUE, year.labels.left=TRUE)
+                }   
+            }
         } else if(type == 'scatter-matrix') {
 
-            plot_object <- dataset %>% as.data.frame() %>% GGally::ggpairs()
+            if(is_multi_time_series(dataset)) {
 
+                plot_object <- dataset %>% as.data.frame() %>% GGally::ggpairs()
+
+            } else {
+
+                plot_object <- NULL
+            }
         } else if(type == 'auto-correlation') {
 
             if(is_multi_time_series(dataset)) {
 
                 plot_object <- NULL
                 shinyjs::hide('var_plots__auto_correlation_lags')
+                shinyjs::hide('autocorrelation_explanation')
 
             } else {
 
                 shinyjs::show('var_plots__auto_correlation_lags')
+                shinyjs::show('autocorrelation_explanation')
 
                 lags <- NULL
                 if(!is.na(input$var_plots__auto_correlation_lags)) {
@@ -144,7 +161,9 @@ helper_create_time_series_graph <- function(input, dataset, type) {
     }
 
     # zoom in on graph if either parameter is set
-    if(!is.null(local_dataset) && (!is.na(local_y_zoom_min) || !is.na(local_y_zoom_max))) {
+    if(!is.null(local_dataset) && 
+        (!is.na(local_y_zoom_min) || !is.na(local_y_zoom_max)) &&
+        type != 'auto-correlation') {
         # if one of the zooms is specified then we hae to provide both, so get corresponding min/max
 
         if(is.na(local_y_zoom_min)) {
@@ -254,7 +273,7 @@ renderPlot__variable_plot <- function(session, ggplot_object, messages) {
     })
 }
 
-renderPlot__var_plots__helper <- function(session, ggplot_object, message, width_function) {
+renderPlot__var_plots__helper <- function(session, ggplot_object, message, height_function) {
 
     renderPlot({
 
@@ -265,7 +284,14 @@ renderPlot__var_plots__helper <- function(session, ggplot_object, message, width
 
     }, height = function() {
 
-        width_function()
+        if(is.null(ggplot_object())) {
+
+            return (1)
+
+        } else {
+
+            return (height_function())
+        }
     })
 }
 

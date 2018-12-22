@@ -37,6 +37,13 @@ renderPlot__correlation__plot <- function(input, session, dataset) {
         })
     }, height = function() {
 
-        session$clientData$output_correlation__plot_width * 0.66  # set height to % of width
+        if(is_single_time_series(dataset())) {
+
+            return (1)
+
+        } else {
+
+            return (session$clientData$output_correlation__plot_width * 0.66)
+        }
     })
 }
