@@ -75,211 +75,234 @@ convert_start_end_window <- function(dataset, start_end_window) {
     return (list(s, e))
 }
 
-helper_create_time_series_graph <- function(input, dataset, type) {
+helper_add_baseline_forecasts <- function(ggplot_object, input, dataset) {
 
-    req(dataset())
+    ######################################################################################################
+    # BASELINE FORECASTS
+    ######################################################################################################
+    local_baseline_forecasts <- input$var_plots__baseline_forecasts
+    local_baseline_horizon <- input$var_plots__baseline__forecast_horizon
 
-    if(is_single_time_series(dataset())) {
+    if(is_single_time_series(dataset) &&
+       !is.null(local_baseline_forecasts) &&
+       !is.null(local_baseline_horizon)) {
 
-        req(input$var_plots__baseline__forecast_horizon)
-    }
+        log_message_variable('input$var_plots__baseline__forecast_horizon', local_baseline_horizon)
+        log_message_variable('input$var_plots__baseline_forecasts', local_baseline_forecasts)
+   
+        show_PI <- length(local_baseline_forecasts) == 1  # if multiple forecasts, don't show PI
+        if('Mean' %in% local_baseline_forecasts) {
 
-    log_message_block_start('Creating time-series graph...')
-
-    custom_plot <- function(dataset) {
-
-        log_message_variable('plot type', type)
-
-        plot_object <- NULL
-
-        if(type == 'time-series') {
-
-            plot_object <- dataset %>% autoplot(facets=input$var_plots__facet)
-
-        } else if(type == 'season') {
-
-            if(is_multi_time_series(dataset)) {
-
-                plot_object <- NULL
-
-            } else {
-
-                log_message_variable('input$var_plots__season_plot_type', input$var_plots__season_plot_type)
-
-                if(input$var_plots__season_plot_type == 'Polar') {
-
-                    plot_object <- dataset %>%  ggseasonplot(polar=TRUE)
-
-                } else if(input$var_plots__season_plot_type == 'Sub-series') {
-
-                    plot_object <- dataset %>% ggsubseriesplot()
-
-                } else {
-
-                    plot_object <- dataset %>% ggseasonplot(year.labels=TRUE, year.labels.left=TRUE)
-                }   
-            }
-        } else if(type == 'scatter-matrix') {
-
-            if(is_multi_time_series(dataset)) {
-
-                plot_object <- dataset %>% as.data.frame() %>% GGally::ggpairs()
-
-            } else {
-
-                plot_object <- NULL
-            }
-        } else if(type == 'auto-correlation') {
-
-            if(is_multi_time_series(dataset)) {
-
-                plot_object <- NULL
-
-            } else {
-
-                lags <- NULL
-                if(!is.na(input$var_plots__auto_correlation_lags)) {
-
-                    lags <- input$var_plots__auto_correlation_lags
-                }
-
-                log_message_variable('input$var_plots__auto_correlation_lags', lags)
-                plot_object <- dataset %>% ggAcf(lag=lags)
-
-            }
-        } else {
-
-            stopifnot(FALSE)
+            ggplot_object <- ggplot_object +
+                autolayer(meanf(dataset, h=local_baseline_horizon),
+                          series='Mean',
+                          PI=show_PI)
         }
 
-        return (plot_object)
-    }
+        if('Naive' %in% local_baseline_forecasts) {
 
-    # reactive data
-    local_dataset <- dataset()
-    local_y_zoom_min <- input$var_plots__y_zoom_min
-    local_y_zoom_max <- input$var_plots__y_zoom_max
-    
-    ggplot_object <- NULL
-
-    if(!is.null(local_dataset)) {
-
-        ggplot_object <- local_dataset %>% custom_plot()
-
-
-        ######################################################################################################
-        # BASELINE FORECASTS
-        ######################################################################################################
-        local_baseline_forecasts <- input$var_plots__baseline_forecasts
-        local_baseline_horizon <- input$var_plots__baseline__forecast_horizon
-
-        if(is_single_time_series(local_dataset) &&
-           type == 'time-series' &&
-           !is.null(local_baseline_forecasts) &&
-           !is.null(local_baseline_horizon)) {
-
-
-            log_message_variable('input$var_plots__baseline__forecast_horizon', local_baseline_horizon)
-            log_message_variable('input$var_plots__baseline_forecasts', local_baseline_forecasts)
-       
-            show_PI <- length(local_baseline_forecasts) == 1  # if multiple forecasts, don't show PI
-            if('Mean' %in% local_baseline_forecasts) {
-
-                ggplot_object <- ggplot_object +
-                    autolayer(meanf(local_dataset, h=local_baseline_horizon),
-                              series='Mean',
-                              PI=show_PI)
-            }
-
-            if('Naive' %in% local_baseline_forecasts) {
-
-                ggplot_object <- ggplot_object +
-                    autolayer(naive(local_dataset, h=local_baseline_horizon),
-                              series='Naive',
-                              PI=show_PI)
-            }
-
-            if('Seasonal Naive' %in% local_baseline_forecasts) {
-
-                ggplot_object <- ggplot_object +
-                    autolayer(snaive(local_dataset, h=local_baseline_horizon),
-                              series='Seasonal Naive',
-                              PI=show_PI)
-            }
-
-            if('Drift' %in% local_baseline_forecasts) {
-
-                ggplot_object <- ggplot_object +
-                    autolayer(rwf(local_dataset, h=local_baseline_horizon, drift=TRUE),
-                              series='Drift',
-                              PI=show_PI)
-            }
-
-            if('Auto' %in% local_baseline_forecasts) {
-
-                ggplot_object <- ggplot_object +
-                    autolayer(forecast(local_dataset, h=local_baseline_horizon),
-                              series='Auto',
-                              PI=show_PI)
-            }
-
-
+            ggplot_object <- ggplot_object +
+                autolayer(naive(dataset, h=local_baseline_horizon),
+                          series='Naive',
+                          PI=show_PI)
         }
 
-        ######################################################################################################
-        # ZOOM
-        # zoom in on graph if either parameter is set and it's not an auto-correlation plot
-        ######################################################################################################
-        if((!is.na(local_y_zoom_min) || !is.na(local_y_zoom_max)) && type != 'auto-correlation') {
+        if('Seasonal Naive' %in% local_baseline_forecasts) {
 
-            log_message_variable('var_plots__y_zoom_min', local_y_zoom_min)
-            log_message_variable('var_plots__y_zoom_max', local_y_zoom_max)
-
-
-            # if one of the zooms is specified then we hae to provide both, so get corresponding min/max
-            if(is.na(local_y_zoom_min)) {
-
-                local_y_zoom_min <- min(local_dataset, na.rm = TRUE)
-            }
-
-            if(is.na(local_y_zoom_max)) {
-
-                local_y_zoom_max <- max(local_dataset, na.rm = TRUE)
-            }
-
-            ggplot_object <- ggplot_object + coord_cartesian(ylim = c(local_y_zoom_min, local_y_zoom_max))
+            ggplot_object <- ggplot_object +
+                autolayer(snaive(dataset, h=local_baseline_horizon),
+                          series='Seasonal Naive',
+                          PI=show_PI)
         }
 
+        if('Drift' %in% local_baseline_forecasts) {
+
+            ggplot_object <- ggplot_object +
+                autolayer(rwf(dataset, h=local_baseline_horizon, drift=TRUE),
+                          series='Drift',
+                          PI=show_PI)
+        }
+
+        if('Auto' %in% local_baseline_forecasts) {
+
+            ggplot_object <- ggplot_object +
+                autolayer(forecast(dataset, h=local_baseline_horizon),
+                          series='Auto',
+                          PI=show_PI)
+        }
     }
 
     return (ggplot_object)
+}
 
+helper_y_zoom <- function(ggplot_object, input, dataset) {
+     ######################################################################################################
+    # ZOOM
+    # zoom in on graph if either parameter is set and it's not an auto-correlation plot
+    ######################################################################################################
+
+    local_y_zoom_min <- input$var_plots__y_zoom_min
+    local_y_zoom_max <- input$var_plots__y_zoom_max
+
+    if(!is.na(local_y_zoom_min) || !is.na(local_y_zoom_max)) {
+
+        log_message_variable('var_plots__y_zoom_min', local_y_zoom_min)
+        log_message_variable('var_plots__y_zoom_max', local_y_zoom_max)
+
+
+        # if one of the zooms is specified then we hae to provide both, so get corresponding min/max
+        if(is.na(local_y_zoom_min)) {
+
+            local_y_zoom_min <- min(dataset, na.rm = TRUE)
+        }
+
+        if(is.na(local_y_zoom_max)) {
+
+            local_y_zoom_max <- max(dataset, na.rm = TRUE)
+        }
+
+        ggplot_object <- ggplot_object + coord_cartesian(ylim = c(local_y_zoom_min, local_y_zoom_max))
+    }
+
+    return (ggplot_object)
+}
+
+helper_add_labels <- function(ggplot_object, input, dataset) {
+
+    ######################################################################################################
+    # PLOT OPTIONS
+    ######################################################################################################
+    if(!is.null(input$var_plots__show_values) && input$var_plots__show_values) {
+
+        ggplot_object <- ggplot_object +
+            geom_point() +
+            geom_text(aes(label=round(as.numeric(dataset),1)), check_overlap=TRUE, vjust=1, hjust=1)
+    }
+
+    return (ggplot_object)
 }
 
 reactive__var_plots__ggplot__creator <- function(input, dataset) {
     reactive({
-        return (helper_create_time_series_graph(input, dataset, type='time-series'))
-    })
-}
 
-reactive__var_plots__season__ggplot__creator <- function(input, dataset) {
-    
-    reactive({
-        return (helper_create_time_series_graph(input, dataset, type='season'))
-    })
-}
+        req(dataset())
 
-reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset) {
-    
-    reactive({
-        return (helper_create_time_series_graph(input, dataset, type='scatter-matrix'))
+        if(is_single_time_series(dataset())) {
+
+            req(input$var_plots__baseline__forecast_horizon)
+        }
+
+        log_message_block_start('Creating `time-series` graph...')
+
+        # reactive data
+        local_dataset <- dataset()
+        
+        ggplot_object <- local_dataset %>%
+            autoplot(facets=input$var_plots__facet) %>%
+            helper_add_baseline_forecasts(input, local_dataset) %>%
+            helper_y_zoom(input, local_dataset) %>%
+            helper_add_labels(input, local_dataset)
     })
 }
 
 reactive__var_plots__auto_correlation__ggplot__creator <- function(input, dataset) {
     
     reactive({
-        return (helper_create_time_series_graph(input, dataset, type='auto-correlation'))
+
+        req(dataset())
+
+        if(is_single_time_series(dataset())) {
+
+            req(input$var_plots__baseline__forecast_horizon)
+        }
+
+        log_message_block_start('Creating `auto-correlation` graph...')
+
+        # reactive data
+        local_dataset <- dataset()
+        ggplot_object <- NULL
+
+        if(is_single_time_series(local_dataset)) {
+
+            lags <- NULL
+            if(!is.na(input$var_plots__auto_correlation_lags)) {
+
+                lags <- input$var_plots__auto_correlation_lags
+            }
+
+            log_message_variable('input$var_plots__auto_correlation_lags', lags)
+            ggplot_object <- local_dataset %>% ggAcf(lag=lags)
+
+        }
+    })
+}
+
+reactive__var_plots__season__ggplot__creator <- function(input, dataset) {
+    
+    reactive({
+
+        req(dataset())
+
+        if(is_single_time_series(dataset())) {
+
+            req(input$var_plots__baseline__forecast_horizon)
+        }
+
+        log_message_block_start('Creating `season` graph...')
+
+        # reactive data
+        local_dataset <- dataset()
+        ggplot_object <- NULL
+
+        if(is_single_time_series(local_dataset)) {
+
+            log_message_variable('input$var_plots__season_plot_type', input$var_plots__season_plot_type)
+
+            if(input$var_plots__season_plot_type == 'Polar') {
+
+                ggplot_object <- local_dataset %>%  ggseasonplot(polar=TRUE)
+
+            } else if(input$var_plots__season_plot_type == 'Sub-series') {
+
+                ggplot_object <- local_dataset %>%
+                    ggsubseriesplot() %>%
+                    helper_y_zoom(input, local_dataset) %>%
+                    helper_add_labels(input, local_dataset)
+
+            } else {
+
+                ggplot_object <- local_dataset %>%
+                    ggseasonplot(year.labels=TRUE, year.labels.left=TRUE) %>%
+                    helper_y_zoom(input, local_dataset) %>%
+                    helper_add_labels(input, local_dataset)
+            }
+        }
+
+    })
+}
+
+reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset) {
+    
+    reactive({
+
+        req(dataset())
+
+        if(is_single_time_series(dataset())) {
+
+            req(input$var_plots__baseline__forecast_horizon)
+        }
+
+        log_message_block_start('Creating `scatter-matrix` graph...')
+
+        # reactive data
+        local_dataset <- dataset()
+        ggplot_object <- NULL
+
+        if(is_multi_time_series(local_dataset)) {
+
+            ggplot_object <- local_dataset %>% as.data.frame() %>% GGally::ggpairs()
+
+        } 
     })
 }
 
