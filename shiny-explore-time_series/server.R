@@ -102,14 +102,7 @@ shinyServer(function(input, output, session) {
                                                                                   reactive__var_plots__auto_correlation__ggplot)
     
     # observe update UI (i.e. seperate out UI changes from creating the plot in `helper_create_time_series_graph()`)
-    # observe({
-    #     req(reactive__var_plots__filtered_data)
-
-    #     input$var_plots__variables_apply  # trigger update from apply, not from selecting the variables
-    # })
-
-
-
+    observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type(session, reactive__var_plots__filtered_data)
 
     # need a reactive value to know whether or not I can set the style of the Variables bsCollapsePanel to 
     # 'danger', because it is scheduled to do so when the variables checkboxlist is updated, which happens

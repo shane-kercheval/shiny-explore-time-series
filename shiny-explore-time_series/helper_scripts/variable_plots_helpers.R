@@ -88,11 +88,8 @@ helper_create_time_series_graph <- function(input, dataset, type) {
             if(is_multi_time_series(dataset)) {
 
                 plot_object <- NULL
-                shinyjs::hide('var_plots__season_plot_type')
 
             } else {
-
-                shinyjs::show('var_plots__season_plot_type')
 
                 if(input$var_plots__season_plot_type == 'Polar') {
 
@@ -122,13 +119,8 @@ helper_create_time_series_graph <- function(input, dataset, type) {
             if(is_multi_time_series(dataset)) {
 
                 plot_object <- NULL
-                shinyjs::hide('var_plots__auto_correlation_lags')
-                shinyjs::hide('autocorrelation_explanation')
 
             } else {
-
-                shinyjs::show('var_plots__auto_correlation_lags')
-                shinyjs::show('autocorrelation_explanation')
 
                 lags <- NULL
                 if(!is.na(input$var_plots__auto_correlation_lags)) {
@@ -347,6 +339,28 @@ observe__var_plots__hide_show_uncollapse_on_dataset_type <- function(session, da
             shinyjs::hide('var_plots__variables_apply')
             shinyjs::hide('var_plots__variables_toggle')
             shinyjs::hide('var_plots__facet')
+        }
+    })
+}
+
+observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type <- function(session, dataset) {
+    observeEvent(dataset(), {
+
+        if(is_single_time_series(dataset())) {
+
+            shinyjs::show('var_plots__season_plot_type')
+            shinyjs::show('var_plots__auto_correlation_lags')
+            shinyjs::show('autocorrelation_explanation')
+
+            #updateCollapse(session, 'var_plots__bscollapse', open='Baseline Forecasts')
+
+        } else {
+
+            shinyjs::hide('var_plots__season_plot_type')
+            shinyjs::hide('var_plots__auto_correlation_lags')
+            shinyjs::hide('autocorrelation_explanation')
+
+            #updateCollapse(session, 'var_plots__bscollapse', close='Baseline Forecasts')
         }
     })
 }
