@@ -2,20 +2,24 @@
 # FILTERED DATASET - Variable Plot's filtered dataset
 # duplicate dataset (which is bad for large datasets) so that the filters don't have to be reapplied every time.
 ##############################################################################################################
-reactive__var_plots__filtered_data__creator <- function(input, dataset) {
+reactive__var_plots__filtered_data__creator <- function(input, dataset, date_slider) {
 
     reactive({
 
-        req(input$var_plots__date_slider)
+        req(date_slider())
         input$var_plots__variables_apply  # trigger update from apply, not from selecting the variables
+
+        log_message_block_start('Creating filtered dataset...')
 
         local_dataset <- dataset()  # clear on new datasets
 
         # filter on window
-        local_start_end <- input$var_plots__date_slider
+        local_start_end <- date_slider()
         local_start_end <- convert_start_end_window(local_dataset, local_start_end)
-        local_dataset <- window(local_dataset, start=local_start_end[[1]], end=local_start_end[[2]])
         log_message_variable('input$var_plots__date_slider', paste0(local_start_end, collapse='-'))
+        local_dataset <- window(local_dataset,
+                                start=local_start_end[[1]],
+                                end=local_start_end[[2]])
 
         if(is_single_time_series(local_dataset)) {
 
@@ -44,6 +48,7 @@ reactive__var_plots__filtered_data__creator <- function(input, dataset) {
         }
 
         return (local_dataset)
+
     })
 }
 
@@ -59,12 +64,12 @@ convert_start_end_window <- function(dataset, start_end_window) {
     # if the selected filter value is different than the actual start value, keep the value to filter on
     if(start_end_window[1] != start(dataset)[1]) {
 
-        s <- start_end_window[1]
+        s <- c(start_end_window[1], 1)
     }
     # if the selected filter value is different than the actual end value, keep the value to filter on
     if(start_end_window[2] != end(dataset)[1]) {
 
-        e <- start_end_window[2]
+        e <- c(start_end_window[2], frequency(dataset))
     }
 
     return (list(s, e))
@@ -72,10 +77,18 @@ convert_start_end_window <- function(dataset, start_end_window) {
 
 helper_create_time_series_graph <- function(input, dataset, type) {
 
+    req(dataset())
+
+    if(is_single_time_series(dataset())) {
+
+        req(input$var_plots__baseline__forecast_horizon)
+    }
+
+    log_message_block_start('Creating time-series graph...')
+
     custom_plot <- function(dataset) {
 
         log_message_variable('plot type', type)
-        log_message_variable('input$var_plots__season_plot_type', input$var_plots__season_plot_type)
 
         plot_object <- NULL
 
@@ -90,6 +103,8 @@ helper_create_time_series_graph <- function(input, dataset, type) {
                 plot_object <- NULL
 
             } else {
+
+                log_message_variable('input$var_plots__season_plot_type', input$var_plots__season_plot_type)
 
                 if(input$var_plots__season_plot_type == 'Polar') {
 
@@ -145,18 +160,81 @@ helper_create_time_series_graph <- function(input, dataset, type) {
     local_y_zoom_min <- input$var_plots__y_zoom_min
     local_y_zoom_max <- input$var_plots__y_zoom_max
     
-    log_message_variable('var_plots__y_zoom_min', local_y_zoom_min)
-    log_message_variable('var_plots__y_zoom_max', local_y_zoom_max)
-
-
     ggplot_object <- NULL
 
     if(!is.null(local_dataset)) {
 
         ggplot_object <- local_dataset %>% custom_plot()
 
-         # zoom in on graph if either parameter is set and it's not an auto-correlation plot
+
+        ######################################################################################################
+        # BASELINE FORECASTS
+        ######################################################################################################
+        local_baseline_forecasts <- input$var_plots__baseline_forecasts
+        local_baseline_horizon <- input$var_plots__baseline__forecast_horizon
+
+        if(is_single_time_series(local_dataset) &&
+           type == 'time-series' &&
+           !is.null(local_baseline_forecasts) &&
+           !is.null(local_baseline_horizon)) {
+
+
+            log_message_variable('input$var_plots__baseline__forecast_horizon', local_baseline_horizon)
+            log_message_variable('input$var_plots__baseline_forecasts', local_baseline_forecasts)
+       
+            show_PI <- length(local_baseline_forecasts) == 1  # if multiple forecasts, don't show PI
+            if('Mean' %in% local_baseline_forecasts) {
+
+                ggplot_object <- ggplot_object +
+                    autolayer(meanf(local_dataset, h=local_baseline_horizon),
+                              series='Mean',
+                              PI=show_PI)
+            }
+
+            if('Naive' %in% local_baseline_forecasts) {
+
+                ggplot_object <- ggplot_object +
+                    autolayer(naive(local_dataset, h=local_baseline_horizon),
+                              series='Naive',
+                              PI=show_PI)
+            }
+
+            if('Seasonal Naive' %in% local_baseline_forecasts) {
+
+                ggplot_object <- ggplot_object +
+                    autolayer(snaive(local_dataset, h=local_baseline_horizon),
+                              series='Seasonal Naive',
+                              PI=show_PI)
+            }
+
+            if('Drift' %in% local_baseline_forecasts) {
+
+                ggplot_object <- ggplot_object +
+                    autolayer(rwf(local_dataset, h=local_baseline_horizon, drift=TRUE),
+                              series='Drift',
+                              PI=show_PI)
+            }
+
+            if('Auto' %in% local_baseline_forecasts) {
+
+                ggplot_object <- ggplot_object +
+                    autolayer(forecast(local_dataset, h=local_baseline_horizon),
+                              series='Auto',
+                              PI=show_PI)
+            }
+
+
+        }
+
+        ######################################################################################################
+        # ZOOM
+        # zoom in on graph if either parameter is set and it's not an auto-correlation plot
+        ######################################################################################################
         if((!is.na(local_y_zoom_min) || !is.na(local_y_zoom_max)) && type != 'auto-correlation') {
+
+            log_message_variable('var_plots__y_zoom_min', local_y_zoom_min)
+            log_message_variable('var_plots__y_zoom_max', local_y_zoom_max)
+
 
             # if one of the zooms is specified then we hae to provide both, so get corresponding min/max
             if(is.na(local_y_zoom_min)) {
@@ -326,19 +404,20 @@ renderPrint__reactiveValues__vp__ggplot_message <- function(message) {
 observe__var_plots__hide_show_uncollapse_on_dataset_type <- function(session, dataset) {
     observeEvent(dataset(), {
 
-        if(is_multi_time_series(dataset())) {
-
-            shinyjs::show('var_plots__variables_apply')
-            shinyjs::show('var_plots__variables_toggle')
-            shinyjs::show('var_plots__facet')
-            updateCollapse(session, 'var_plots__bscollapse', open='Variables')
-            
-        } else {
+        if(is_single_time_series(dataset())) {
 
             updateCollapse(session, 'var_plots__bscollapse', close='Variables')
             shinyjs::hide('var_plots__variables_apply')
             shinyjs::hide('var_plots__variables_toggle')
             shinyjs::hide('var_plots__facet')
+            
+        } else {
+
+            shinyjs::show('var_plots__variables_apply')
+            shinyjs::show('var_plots__variables_toggle')
+            shinyjs::show('var_plots__facet')
+            updateCollapse(session, 'var_plots__bscollapse', open='Variables')
+
         }
     })
 }
@@ -352,7 +431,13 @@ observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type <- function(se
             shinyjs::show('var_plots__auto_correlation_lags')
             shinyjs::show('autocorrelation_explanation')
 
-            #updateCollapse(session, 'var_plots__bscollapse', open='Baseline Forecasts')
+            updateNumericInput(session,
+                               inputId='var_plots__baseline__forecast_horizon',
+                               value = frequency(dataset()))
+
+            shinyjs::show('var_plots__baseline__forecast_horizon')
+            shinyjs::show('var_plots__baseline_forecasts')
+            updateCollapse(session, 'var_plots__bscollapse', open='Baseline Forecasts')
 
         } else {
 
@@ -360,7 +445,10 @@ observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type <- function(se
             shinyjs::hide('var_plots__auto_correlation_lags')
             shinyjs::hide('autocorrelation_explanation')
 
-            #updateCollapse(session, 'var_plots__bscollapse', close='Baseline Forecasts')
+
+            updateCollapse(session, 'var_plots__bscollapse', close='Baseline Forecasts')
+            shinyjs::hide('var_plots__baseline__forecast_horizon')
+            shinyjs::hide('var_plots__baseline_forecasts')
         }
     })
 }

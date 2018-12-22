@@ -243,7 +243,13 @@ temp %>%
 ```
 
 
+```{r}
+beer_data <- ausbeer
+beer_data <- window(beer_data, start=1992, end=c(2007, 4))
 
+autoplot(beer_data) +
+    autolayer(meanf(beer_data, h=11), series='Mean', PI=FALSE)
 
+```
 
 

@@ -6,7 +6,7 @@ library(shinyBS)
 library(rtools)
 library(ggplot2)
 library(fpp2)
-library(ggfortify)
+#library(ggfortify)  ggfortify does not play nice with the graphs, I get errors like "Error: Invalid input: date_trans works with objects of class Date only"
 library(stringr)
 library(tidyverse)
 library(scales)
@@ -67,8 +67,11 @@ shinyServer(function(input, output, session) {
     ##########################################################################################################
     # cached dataset after the filters have been applied (which is bad for large datasets :( ) so that the
     # filters don't have to be reapplied every time; sacrificing memory for speed 
+
+    throttled__var_plots__date_slider <- throttle(reactive(input$var_plots__date_slider), 2000)
     reactive__var_plots__filtered_data <- reactive__var_plots__filtered_data__creator(input,
-                                                                                      reactive__source_data)
+                                                                                      reactive__source_data,
+                                                                                      throttled__var_plots__date_slider)
 
     output$var_plots__date_slider__UI <- renderUI__var_plots__date_slider__UI(reactive__source_data)
     output$var_plots__ts_variables__UI <- renderUI__var_plots__ts_variables__UI(reactive__source_data)
