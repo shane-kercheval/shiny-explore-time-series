@@ -119,7 +119,9 @@ shinyUI(fluidPage(theme="custom.css",
                         numericInput(inputId='var_plots__y_zoom_max',
                                      label='Y-Axis Zoom Max',
                                      value=NULL),
-                        checkboxInput(inputId='var_plots__show_values', label='Show Values', value=FALSE),
+                        tags$div(class='bold_checkbox_input',
+                                 checkboxInput(inputId='var_plots__show_values', label='Show Values', value=FALSE)
+                        ),
                         checkboxInput(inputId='var_plots__facet', label='Seperate Axes', value=FALSE),
                         style='default'
                     ),
@@ -136,6 +138,9 @@ shinyUI(fluidPage(theme="custom.css",
                                                        'Drift',
                                                        'Auto'), 
                                            selected = NULL),
+                        tags$div(class='bold_checkbox_input',
+                                 checkboxInput(inputId='var_plots__baseline__show_values', label='Show Forecast Values', value=FALSE)
+                        ),
                         style='default'
                     ),
                     bsCollapsePanel(

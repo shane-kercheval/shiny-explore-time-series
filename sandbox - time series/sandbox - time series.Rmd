@@ -253,3 +253,49 @@ autoplot(beer_data) +
 ```
 
 
+
+
+```{r}
+library(forecast)
+
+dataset <- a10
+forecast_model <- forecast(dataset, h=24)
+
+s <- start(forecast_model$mean)
+e <- end(forecast_model$mean)
+f <- frequency(forecast_model$mean)
+
+df_forecast_model <- as.data.frame(forecast_model)
+ts_forecast <- ts(df_forecast_model$`Point Forecast`, start = s, end=e, frequency = f)
+
+dataset %>%
+    autoplot() + 
+    autolayer(forecast_model,
+              series='Auto',
+              PI=TRUE) + 
+    geom_point() +
+    geom_text(aes(label=round(as.numeric(dataset), 0)), check_overlap=TRUE, vjust=1, hjust=1) +
+    geom_point(data= ts_forecast) + 
+    geom_text(data= ts_forecast, aes(label=round(ts_forecast, 1)), check_overlap=TRUE, vjust=0, hjust=0, color='blue')
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

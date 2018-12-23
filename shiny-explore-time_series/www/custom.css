@@ -39,3 +39,7 @@
     height: 100% !important;
     margin-bottom: 10px;
 }
+
+.bold_checkbox_input span {
+    font-weight: 700 !important;
+}

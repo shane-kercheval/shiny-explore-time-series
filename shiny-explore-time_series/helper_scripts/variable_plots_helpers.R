@@ -93,43 +93,67 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset) {
         show_PI <- length(local_baseline_forecasts) == 1  # if multiple forecasts, don't show PI
         if('Mean' %in% local_baseline_forecasts) {
 
+            forecast_model <- meanf(dataset, h=local_baseline_horizon)
             ggplot_object <- ggplot_object +
-                autolayer(meanf(dataset, h=local_baseline_horizon),
+                autolayer(forecast_model,
                           series='Mean',
                           PI=show_PI)
         }
 
         if('Naive' %in% local_baseline_forecasts) {
 
+            forecast_model <- naive(dataset, h=local_baseline_horizon)
             ggplot_object <- ggplot_object +
-                autolayer(naive(dataset, h=local_baseline_horizon),
+                autolayer(forecast_model,
                           series='Naive',
                           PI=show_PI)
         }
 
         if('Seasonal Naive' %in% local_baseline_forecasts) {
 
+            forecast_model <- snaive(dataset, h=local_baseline_horizon)
             ggplot_object <- ggplot_object +
-                autolayer(snaive(dataset, h=local_baseline_horizon),
+                autolayer(forecast_model,
                           series='Seasonal Naive',
                           PI=show_PI)
         }
 
         if('Drift' %in% local_baseline_forecasts) {
 
+            forecast_model <- rwf(dataset, h=local_baseline_horizon, drift=TRUE)
             ggplot_object <- ggplot_object +
-                autolayer(rwf(dataset, h=local_baseline_horizon, drift=TRUE),
+                autolayer(forecast_model,
                           series='Drift',
                           PI=show_PI)
         }
 
         if('Auto' %in% local_baseline_forecasts) {
 
+            forecast_model <- forecast(dataset, h=local_baseline_horizon)
             ggplot_object <- ggplot_object +
-                autolayer(forecast(dataset, h=local_baseline_horizon),
+                autolayer(forecast_model,
                           series='Auto',
                           PI=show_PI)
         }
+
+        if(input$var_plots__baseline__show_values && length(local_baseline_forecasts) == 1) {
+
+            s <- start(forecast_model$mean)
+            e <- end(forecast_model$mean)
+            f <- frequency(forecast_model$mean)
+
+            df_forecast_model <- as.data.frame(forecast_model)
+            ts_forecast <- ts(as.data.frame(forecast_model)$`Point Forecast`, start = s, end=e, frequency = f)
+
+            ggplot_object <- ggplot_object + 
+                geom_point(data= ts_forecast) + 
+                geom_text(data=ts_forecast,
+                          aes(label=format_labels(as.numeric(ts_forecast))), 
+                          check_overlap=TRUE,
+                          vjust=0,
+                          hjust=0)
+        }
+
     }
 
     return (ggplot_object)
@@ -167,6 +191,35 @@ helper_y_zoom <- function(ggplot_object, input, dataset) {
     return (ggplot_object)
 }
 
+format_labels <- function(values) {
+
+    if(max(values) > 1000000) {
+
+        values <- paste0(round(values / 1000000, 2), 'M')
+
+    } else if(max(values) > 100000) {
+
+        values <- paste0(round(values / 1000, 1), 'K')
+
+    } else if(max(values) > 1000) {
+
+        values <- paste0(round(values / 1000, 1), 'K')
+
+    } else if(max(values) > 100) {
+
+        values <- round(values, 0)
+
+    } else if(max(values) < 1) {
+
+        values <- round(values, 2)
+
+    } else {
+
+        values <- round(values, 1)
+    }
+
+    return (values)
+}
 helper_add_labels <- function(ggplot_object, input, dataset) {
 
     ######################################################################################################
@@ -174,37 +227,9 @@ helper_add_labels <- function(ggplot_object, input, dataset) {
     ######################################################################################################
     if(!is.null(input$var_plots__show_values) && input$var_plots__show_values) {
 
-        dataset_values <- as.numeric(dataset)
-
-        if(max(dataset) > 1000000) {
-
-            dataset_values <- paste0(round(dataset_values / 1000000, 2), 'M')
-
-        } else if(max(dataset) > 100000) {
-
-            dataset_values <- paste0(round(dataset_values / 1000, 1), 'K')
-
-
-        } else if(max(dataset) > 1000) {
-
-            dataset_values <- paste0(round(dataset_values / 1000, 1), 'K')
-
-        } else if(max(dataset) > 100) {
-
-            dataset_values <- round(dataset_values, 0)
-
-        } else if(max(dataset) < 1) {
-
-            dataset_values <- round(dataset_values, 2)
-
-        } else {
-
-            dataset_values <- round(dataset_values, 1)
-        }
-
         ggplot_object <- ggplot_object +
             geom_point() +
-            geom_text(aes(label=dataset_values), check_overlap=TRUE, vjust=1, hjust=1)
+            geom_text(aes(label=format_labels(as.numeric(dataset))), check_overlap=TRUE, vjust=1, hjust=1)
     }
 
     return (ggplot_object)
