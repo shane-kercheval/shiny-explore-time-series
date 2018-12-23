@@ -318,6 +318,12 @@ create_daily_average(milk)
 create_daily_average(ausbeer)
 create_daily_average(melsyd)
 
+log(milk+1, base=exp(1))
+log(milk+1, base=2)
+
+
+lambda <- BoxCox.lambda(milk)
+BoxCox(milk, lambda = lambda)
 
 ```
 

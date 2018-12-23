@@ -43,3 +43,20 @@
 .bold_checkbox_input span {
     font-weight: 700 !important;
 }
+
+.inline_label_control .inline_label {
+    float: left;
+    width: 30%;
+    padding-top: 10px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.inline_label_control .shiny-input-container {
+    display: grid !important;
+    width: 70%;
+}
+
+.inline_label_control .form-group {
+    margin-bottom: 0px !important;
+}

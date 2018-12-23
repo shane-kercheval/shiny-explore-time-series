@@ -80,21 +80,24 @@ shinyUI(fluidPage(theme="custom.css",
                 class='column-input-control-style',
                 tags$div(
                     class='input-control-style',
-                    sliderTextInput(inputId='correlation__corr_threshold',
+                    sliderInput(inputId='correlation__corr_threshold',
                                     label='Min Correlation Threshold', ## percent increase
-                                    choices=seq(0, 1, 0.05),
-                                    selected=0,
-                                    grid=TRUE),
-                    sliderTextInput(inputId='correlation__p_value_threshold',
+                                    min=0,
+                                    max=1,
+                                    step=0.05,
+                                    value=0),
+                    sliderInput(inputId='correlation__p_value_threshold',
                                     label='Max P-Value Treshold',
-                                    choices=seq(0, 1, 0.05),
-                                    selected=1,
-                                    grid=TRUE),
-                    sliderTextInput(inputId='correlation__base_size',
+                                    min=0,
+                                    max=1,
+                                    step=0.05,
+                                    value=1),
+                    sliderInput(inputId='correlation__base_size',
                                     label='Text Size',
-                                    choices=seq(6, 20, 1),
-                                    selected=15,
-                                    grid=TRUE),
+                                    min=6,
+                                    max=20,
+                                    step=1,
+                                    value=15),
                     checkboxInput(inputId='correlation__pretty_text',
                                   label='Pretty Text', value=FALSE, width=NULL)
                     )
@@ -119,6 +122,8 @@ shinyUI(fluidPage(theme="custom.css",
                         numericInput(inputId='var_plots__y_zoom_max',
                                      label='Y-Axis Zoom Max',
                                      value=NULL),
+                        tooltip_zoom_not_filter('var_plots__y_zoom_min'),
+                        tooltip_zoom_not_filter('var_plots__y_zoom_max'),
                         tags$div(class='bold_checkbox_input',
                                  checkboxInput(inputId='var_plots__show_values', label='Show Values', value=FALSE)
                         ),
@@ -128,8 +133,40 @@ shinyUI(fluidPage(theme="custom.css",
                     bsCollapsePanel(
                         'Transformations',
                         tags$div(class='bold_checkbox_input',
-                                 checkboxInput(inputId='var_plots__daily_average', label='To Daily Average', value=FALSE)
-                        )
+                                 checkboxInput(inputId='var_plots__transformation__daily_average',
+                                               label='To Daily Average', value=FALSE)
+                        ),
+                        tooltip_transformation_not_backtransformed('var_plots__transformation__daily_average'),
+                        inline_control(
+                            label_text='Log:',
+                            padding_top_px=22,
+                            control=sliderTextInput(inputId='var_plots__transformation_log',
+                                                    label='',
+                                                    choices=c('None', 'e', '2', '10'),
+                                                    selected='None',
+                                                    grid=TRUE)
+                        ),
+                        inline_control(
+                            label_text='Power:',
+                            padding_top_px=22,
+                            control=sliderTextInput(inputId='var_plots__transformation_power',
+                                                    label='',
+                                                    choices=c('None',seq(2, 20, 1)),
+                                                    selected='None',
+                                                    grid=TRUE)
+                        ),
+                        inline_control(
+                            label_text='Box-Cox:',
+                            padding_top_px=22,
+                            control=sliderTextInput(inputId='var_plots__transformation_boxcox',
+                                                    label='',
+                                                    choices=c('None', 'Auto', seq(0, 1, 0.10)),
+                                                    selected='None',
+                                                    grid=TRUE)
+                        ),
+                        tooltip_transformation_not_backtransformed('var_plots__transformation_log'),
+                        tooltip_transformation_not_backtransformed('var_plots__transformation_power'),
+                        tooltip_transformation_not_backtransformed('var_plots__transformation_boxcox')
                     ),
                     bsCollapsePanel(
                         'Baseline Forecasts',

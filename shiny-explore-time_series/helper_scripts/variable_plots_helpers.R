@@ -238,7 +238,11 @@ helper_add_labels <- function(ggplot_object, input, dataset) {
 
 helper_create_daily_average_dataset <- function(dataset, input) {
 
-    if(!is.null(input$var_plots__daily_average) && input$var_plots__daily_average) {
+    if(!is.null(input$var_plots__transformation__daily_average) &&
+            input$var_plots__transformation__daily_average) {
+
+        log_message_variable('input$var_plots__transformation__daily_average',
+                             input$var_plots__transformation__daily_average)
 
         freq <- frequency(dataset)
         
@@ -260,11 +264,86 @@ helper_create_daily_average_dataset <- function(dataset, input) {
     }
 }
 
+helper_transform_log  <- function(dataset, input) {
+
+    if(!is.null(input$var_plots__transformation_log) &&
+            input$var_plots__transformation_log != 'None') {
+
+        log_message_variable('input$var_plots__transformation_log',
+                             input$var_plots__transformation_log)
+
+        if(input$var_plots__transformation_log == 'e') {
+
+            base <- exp(1)
+
+        } else {
+
+            base <- as.numeric(input$var_plots__transformation_log)
+        }
+
+        return (log(dataset + 1, base=base))
+
+    } else {
+
+        return (dataset)
+    }
+}
+helper_transform_power  <- function(dataset, input) {
+
+    if(!is.null(input$var_plots__transformation_power) &&
+            input$var_plots__transformation_power != 'None') {
+
+        log_message_variable('input$var_plots__transformation_power',
+                             input$var_plots__transformation_power)
+
+        return(dataset^as.numeric(input$var_plots__transformation_power))
+
+    } else {
+
+        return (dataset)
+    }
+}
+helper_transform_box_cox  <- function(dataset, input) {
+
+    if(!is.null(input$var_plots__transformation_boxcox) &&
+            input$var_plots__transformation_boxcox != 'None') {
+
+        log_message_variable('input$var_plots__transformation_boxcox',
+                             input$var_plots__transformation_boxcox)
+
+        if(input$var_plots__transformation_boxcox == 'Auto') {
+
+            lambda <- BoxCox.lambda(dataset)
+
+        } else {
+
+            lambda <- as.numeric(input$var_plots__transformation_boxcox)
+        }
+
+        return (BoxCox(dataset, lambda = lambda))
+
+    } else {
+
+        return (dataset)
+    }
+}
+helper_apply_transformations <- function(dataset, input) {
+
+    return (
+
+        dataset %>% 
+            helper_create_daily_average_dataset(input) %>%
+            helper_transform_log(input) %>%
+            helper_transform_power(input) %>%
+            helper_transform_box_cox(input)
+    )
+}
+
 helper_add_daily_average_y_axis_label <- function(ggplot_object, input, dataset){
 
     data_frequency <- frequency(dataset)
-    if(!is.null(input$var_plots__daily_average) &&
-           input$var_plots__daily_average &&
+    if(!is.null(input$var_plots__transformation__daily_average) &&
+           input$var_plots__transformation__daily_average &&
            (data_frequency == 4 || data_frequency == 12 || data_frequency == 52)) {
 
         ggplot_object <- ggplot_object + ylab('Daily Average')
@@ -272,6 +351,7 @@ helper_add_daily_average_y_axis_label <- function(ggplot_object, input, dataset)
 
     return (ggplot_object)
 }
+
 
 reactive__var_plots__ggplot__creator <- function(input, dataset) {
     reactive({
@@ -286,7 +366,7 @@ reactive__var_plots__ggplot__creator <- function(input, dataset) {
         log_message_block_start('Creating `time-series` graph...')
 
         # reactive data
-        local_dataset <- dataset() %>% helper_create_daily_average_dataset(input)
+        local_dataset <- dataset() %>% helper_apply_transformations(input)
         
         ggplot_object <- local_dataset %>%
             autoplot(facets=input$var_plots__facet) %>%
@@ -311,7 +391,7 @@ reactive__var_plots__auto_correlation__ggplot__creator <- function(input, datase
         log_message_block_start('Creating `auto-correlation` graph...')
 
         # reactive data
-        local_dataset <- dataset() %>% helper_create_daily_average_dataset(input)
+        local_dataset <- dataset() %>% helper_apply_transformations(input)
         ggplot_object <- NULL
 
         if(is_single_time_series(local_dataset)) {
@@ -342,7 +422,7 @@ reactive__var_plots__season__ggplot__creator <- function(input, dataset) {
         log_message_block_start('Creating `season` graph...')
 
         # reactive data
-        local_dataset <- dataset() %>% helper_create_daily_average_dataset(input)
+        local_dataset <- dataset() %>% helper_apply_transformations(input)
         ggplot_object <- NULL
 
         if(is_single_time_series(local_dataset)) {
@@ -389,7 +469,7 @@ reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset)
         log_message_block_start('Creating `scatter-matrix` graph...')
 
         # reactive data
-        local_dataset <- dataset() %>% helper_create_daily_average_dataset(input)
+        local_dataset <- dataset() %>% helper_apply_transformations(input)
         ggplot_object <- NULL
 
         if(is_multi_time_series(local_dataset)) {
@@ -538,11 +618,11 @@ observe__var_plots__hide_show_uncollapse_on_dataset_type <- function(session, da
         data_frequency <- frequency(dataset())
         if(data_frequency == 4 || data_frequency == 12 || data_frequency == 52) {
 
-            shinyjs::show('var_plots__daily_average')
+            shinyjs::show('var_plots__transformation__daily_average')
 
         } else {
 
-            shinyjs::hide('var_plots__daily_average')
+            shinyjs::hide('var_plots__transformation__daily_average')
         }
     })
 }
