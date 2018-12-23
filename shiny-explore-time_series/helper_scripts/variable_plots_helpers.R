@@ -319,8 +319,7 @@ reactive__var_plots__season__ggplot__creator <- function(input, dataset) {
 
                 ggplot_object <- local_dataset %>%
                     ggsubseriesplot() %>%
-                    helper_y_zoom(input, local_dataset) %>%
-                    helper_add_labels(input, local_dataset)
+                    helper_y_zoom(input, local_dataset)
 
             } else {
 
