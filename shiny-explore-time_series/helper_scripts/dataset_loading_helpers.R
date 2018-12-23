@@ -23,11 +23,7 @@ reactive__source_data__creator <- function(input, custom_triggers) {
 
             if(is.null(upload_file_path)) {
                 
-                if(local_preloaded_dataset == 'Credit') {
-
-                    loaded_dataset <- dataset_or_null('example_datasets/credit.csv')
-
-                } else if (local_preloaded_dataset == 'Anti-Diabetic Drug Sales in Australia from 1991 to 2008') {
+                if (local_preloaded_dataset == 'Anti-Diabetic Drug Sales in Australia from 1991 to 2008') {
 
                     loaded_dataset <- a10
 
