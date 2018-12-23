@@ -174,9 +174,37 @@ helper_add_labels <- function(ggplot_object, input, dataset) {
     ######################################################################################################
     if(!is.null(input$var_plots__show_values) && input$var_plots__show_values) {
 
+        dataset_values <- as.numeric(dataset)
+
+        if(max(dataset) > 1000000) {
+
+            dataset_values <- paste0(round(dataset_values / 1000000, 2), 'M')
+
+        } else if(max(dataset) > 100000) {
+
+            dataset_values <- paste0(round(dataset_values / 1000, 1), 'K')
+
+
+        } else if(max(dataset) > 1000) {
+
+            dataset_values <- paste0(round(dataset_values / 1000, 1), 'K')
+
+        } else if(max(dataset) > 100) {
+
+            dataset_values <- round(dataset_values, 0)
+
+        } else if(max(dataset) < 1) {
+
+            dataset_values <- round(dataset_values, 2)
+
+        } else {
+
+            dataset_values <- round(dataset_values, 1)
+        }
+
         ggplot_object <- ggplot_object +
             geom_point() +
-            geom_text(aes(label=round(as.numeric(dataset),1)), check_overlap=TRUE, vjust=1, hjust=1)
+            geom_text(aes(label=dataset_values), check_overlap=TRUE, vjust=1, hjust=1)
     }
 
     return (ggplot_object)
@@ -456,7 +484,7 @@ observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type <- function(se
 
             updateNumericInput(session,
                                inputId='var_plots__baseline__forecast_horizon',
-                               value = frequency(dataset()))
+                               value = 2* frequency(dataset()))
 
             shinyjs::show('var_plots__baseline__forecast_horizon')
             shinyjs::show('var_plots__baseline_forecasts')
