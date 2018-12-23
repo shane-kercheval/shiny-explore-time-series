@@ -109,7 +109,7 @@ shinyUI(fluidPage(theme="custom.css",
             'Plots',
             column(3,
                 class='column-input-control-style',
-                bsCollapse(id='var_plots__bscollapse', open='Options', multiple=TRUE,
+                bsCollapse(id='var_plots__bscollapse', open=c('Options', 'Transformations'), multiple=TRUE,
                     bsCollapsePanel(
                         'Options',
                         uiOutput('var_plots__date_slider__UI'),
@@ -124,6 +124,12 @@ shinyUI(fluidPage(theme="custom.css",
                         ),
                         checkboxInput(inputId='var_plots__facet', label='Seperate Axes', value=FALSE),
                         style='default'
+                    ),
+                    bsCollapsePanel(
+                        'Transformations',
+                        tags$div(class='bold_checkbox_input',
+                                 checkboxInput(inputId='var_plots__daily_average', label='To Daily Average', value=FALSE)
+                        )
                     ),
                     bsCollapsePanel(
                         'Baseline Forecasts',

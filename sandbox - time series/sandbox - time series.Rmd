@@ -280,7 +280,46 @@ dataset %>%
 
 ```
 
+```{r}
+monthdays(milk)
+frequency(milk) # 12 month
 
+monthdays(ausbeer)
+frequency(ausbeer) #  4 quarter
+
+monthdays(melsyd)
+frequency(melsyd) #  weekly
+
+
+dframe <- cbind(Monthly = milk, 
+                DailyAverage= milk / mont)
+
+
+
+create_daily_average <- function(dataset) {
+    
+    freq <- frequency(dataset)
+    
+    if(freq == 12 || freq == 4) {  # monthly or quarterly
+
+        return (dataset / monthdays(dataset))
+
+    } else if (freq == 52) {  # weekly
+    
+        return (dataset / 7)
+
+    } else {
+
+        stopifnot(FALSE)
+    }
+}
+
+create_daily_average(milk)
+create_daily_average(ausbeer)
+create_daily_average(melsyd)
+
+
+```
 
 
 
