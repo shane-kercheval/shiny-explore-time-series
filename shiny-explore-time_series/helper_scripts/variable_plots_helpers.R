@@ -2,7 +2,7 @@
 # FILTERED DATASET - Variable Plot's filtered dataset
 # duplicate dataset (which is bad for large datasets) so that the filters don't have to be reapplied every time.
 ##############################################################################################################
-reactive__var_plots__filtered_data__creator <- function(input, dataset, date_slider) {
+reactive__var_plots__filtered_data__creator <- function(input, dataset, date_slider, reactiveValue_trans) {
 
     reactive({
 
@@ -46,6 +46,8 @@ reactive__var_plots__filtered_data__creator <- function(input, dataset, date_sli
             
             stopifnot(FALSE)
         }
+
+        local_dataset <- local_dataset %>% helper_apply_transformations(input, reactiveValue_trans)
 
         return (local_dataset)
 
@@ -236,7 +238,7 @@ helper_add_labels <- function(ggplot_object, input, dataset) {
     return (ggplot_object)
 }
 
-helper_create_daily_average_dataset <- function(dataset, input) {
+helper_create_daily_average_dataset <- function(dataset, input, reactiveValue_trans) {
 
     if(!is.null(input$var_plots__transformation__daily_average) &&
             input$var_plots__transformation__daily_average) {
@@ -248,10 +250,14 @@ helper_create_daily_average_dataset <- function(dataset, input) {
         
         if(freq == 12 || freq == 4) {  # monthly or quarterly
 
+            reactiveValue_trans$message <- c(isolate(reactiveValue_trans$message),
+                                             'Average Daily Value')
             return (dataset / monthdays(dataset))
 
         } else if (freq == 52) {  # weekly
         
+            reactiveValue_trans$message <- c(isolate(reactiveValue_trans$message),
+                                             'Average Daily Value')
             return (dataset / 7)
 
         } else {
@@ -264,7 +270,7 @@ helper_create_daily_average_dataset <- function(dataset, input) {
     }
 }
 
-helper_transform_log  <- function(dataset, input) {
+helper_transform_log  <- function(dataset, input, reactiveValue_trans) {
 
     if(!is.null(input$var_plots__transformation_log) &&
             input$var_plots__transformation_log != 'None') {
@@ -281,6 +287,8 @@ helper_transform_log  <- function(dataset, input) {
             base <- as.numeric(input$var_plots__transformation_log)
         }
 
+        reactiveValue_trans$message <- c(isolate(reactiveValue_trans$message),
+                                         paste0('Log (base ', round(base, 2), ')'))
         return (log(dataset + 1, base=base))
 
     } else {
@@ -288,7 +296,7 @@ helper_transform_log  <- function(dataset, input) {
         return (dataset)
     }
 }
-helper_transform_power  <- function(dataset, input) {
+helper_transform_power  <- function(dataset, input, reactiveValue_trans) {
 
     if(!is.null(input$var_plots__transformation_power) &&
             input$var_plots__transformation_power != 'None') {
@@ -296,14 +304,17 @@ helper_transform_power  <- function(dataset, input) {
         log_message_variable('input$var_plots__transformation_power',
                              input$var_plots__transformation_power)
 
-        return(dataset^as.numeric(input$var_plots__transformation_power))
+        power <- as.numeric(input$var_plots__transformation_power)
+        reactiveValue_trans$message <- c(isolate(reactiveValue_trans$message),
+                                         paste0('Power (', power, ')'))
+        return(dataset^power)
 
     } else {
 
         return (dataset)
     }
 }
-helper_transform_box_cox  <- function(dataset, input) {
+helper_transform_box_cox  <- function(dataset, input, reactiveValue_trans) {
 
     if(!is.null(input$var_plots__transformation_boxcox) &&
             input$var_plots__transformation_boxcox != 'None') {
@@ -320,6 +331,8 @@ helper_transform_box_cox  <- function(dataset, input) {
             lambda <- as.numeric(input$var_plots__transformation_boxcox)
         }
 
+        reactiveValue_trans$message <- c(isolate(reactiveValue_trans$message),
+                                         paste0('BoxCox (lambda: ', round(lambda, 3), ')'))
         return (BoxCox(dataset, lambda = lambda))
 
     } else {
@@ -327,33 +340,33 @@ helper_transform_box_cox  <- function(dataset, input) {
         return (dataset)
     }
 }
-helper_apply_transformations <- function(dataset, input) {
+helper_apply_transformations <- function(dataset, input, reactiveValue_trans) {
+
+    reactiveValue_trans$message <- NULL
 
     return (
 
         dataset %>% 
-            helper_create_daily_average_dataset(input) %>%
-            helper_transform_log(input) %>%
-            helper_transform_power(input) %>%
-            helper_transform_box_cox(input)
+            helper_create_daily_average_dataset(input, reactiveValue_trans) %>%
+            helper_transform_log(input, reactiveValue_trans) %>%
+            helper_transform_power(input, reactiveValue_trans) %>%
+            helper_transform_box_cox(input, reactiveValue_trans)
     )
 }
 
-helper_add_daily_average_y_axis_label <- function(ggplot_object, input, dataset){
+helper_add_transformation_y_axis_label <- function(ggplot_object, reactiveValue_trans){
 
-    data_frequency <- frequency(dataset)
-    if(!is.null(input$var_plots__transformation__daily_average) &&
-           input$var_plots__transformation__daily_average &&
-           (data_frequency == 4 || data_frequency == 12 || data_frequency == 52)) {
+    transfomration_messages <- isolate(reactiveValue_trans$message)
+    if(!is.null(transfomration_messages) && length(transfomration_messages) > 0) {
 
-        ggplot_object <- ggplot_object + ylab('Daily Average')
+        ggplot_object <- ggplot_object + ylab(paste0(transfomration_messages, collapse='; '))
     }
 
     return (ggplot_object)
 }
 
 
-reactive__var_plots__ggplot__creator <- function(input, dataset) {
+reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_trans) {
     reactive({
 
         req(dataset())
@@ -366,18 +379,18 @@ reactive__var_plots__ggplot__creator <- function(input, dataset) {
         log_message_block_start('Creating `time-series` graph...')
 
         # reactive data
-        local_dataset <- dataset() %>% helper_apply_transformations(input)
+        local_dataset <- dataset()
         
         ggplot_object <- local_dataset %>%
             autoplot(facets=input$var_plots__facet) %>%
             helper_add_baseline_forecasts(input, local_dataset) %>%
             helper_y_zoom(input, local_dataset) %>%
             helper_add_labels(input, local_dataset) %>%
-            helper_add_daily_average_y_axis_label(input, local_dataset)
+            helper_add_transformation_y_axis_label(reactiveValue_trans)
     })
 }
 
-reactive__var_plots__auto_correlation__ggplot__creator <- function(input, dataset) {
+reactive__var_plots__auto_correlation__ggplot__creator <- function(input, dataset, reactiveValue_trans) {
     
     reactive({
 
@@ -391,7 +404,7 @@ reactive__var_plots__auto_correlation__ggplot__creator <- function(input, datase
         log_message_block_start('Creating `auto-correlation` graph...')
 
         # reactive data
-        local_dataset <- dataset() %>% helper_apply_transformations(input)
+        local_dataset <- dataset()
         ggplot_object <- NULL
 
         if(is_single_time_series(local_dataset)) {
@@ -408,7 +421,7 @@ reactive__var_plots__auto_correlation__ggplot__creator <- function(input, datase
     })
 }
 
-reactive__var_plots__season__ggplot__creator <- function(input, dataset) {
+reactive__var_plots__season__ggplot__creator <- function(input, dataset, reactiveValue_trans) {
     
     reactive({
 
@@ -422,7 +435,7 @@ reactive__var_plots__season__ggplot__creator <- function(input, dataset) {
         log_message_block_start('Creating `season` graph...')
 
         # reactive data
-        local_dataset <- dataset() %>% helper_apply_transformations(input)
+        local_dataset <- dataset()
         ggplot_object <- NULL
 
         if(is_single_time_series(local_dataset)) {
@@ -433,14 +446,14 @@ reactive__var_plots__season__ggplot__creator <- function(input, dataset) {
 
                 ggplot_object <- local_dataset %>% 
                     ggseasonplot(polar=TRUE) %>%
-                    helper_add_daily_average_y_axis_label(input, local_dataset)
+                    helper_add_transformation_y_axis_label(reactiveValue_trans)
 
             } else if(input$var_plots__season_plot_type == 'Sub-series') {
 
                 ggplot_object <- local_dataset %>%
                     ggsubseriesplot() %>%
                     helper_y_zoom(input, local_dataset) %>%
-                    helper_add_daily_average_y_axis_label(input, local_dataset)
+                    helper_add_transformation_y_axis_label(reactiveValue_trans)
 
             } else {
 
@@ -448,14 +461,14 @@ reactive__var_plots__season__ggplot__creator <- function(input, dataset) {
                     ggseasonplot(year.labels=TRUE, year.labels.left=TRUE) %>%
                     helper_y_zoom(input, local_dataset) %>%
                     helper_add_labels(input, local_dataset) %>%
-                    helper_add_daily_average_y_axis_label(input, local_dataset)
+                    helper_add_transformation_y_axis_label(reactiveValue_trans)
             }
         }
 
     })
 }
 
-reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset) {
+reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset, reactiveValue_trans) {
     
     reactive({
 
@@ -469,12 +482,15 @@ reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset)
         log_message_block_start('Creating `scatter-matrix` graph...')
 
         # reactive data
-        local_dataset <- dataset() %>% helper_apply_transformations(input)
+        local_dataset <- dataset()
         ggplot_object <- NULL
 
         if(is_multi_time_series(local_dataset)) {
 
-            ggplot_object <- local_dataset %>% as.data.frame() %>% GGally::ggpairs()
+            ggplot_object <- local_dataset %>%
+                as.data.frame() %>%
+                GGally::ggpairs()%>%
+                helper_add_transformation_y_axis_label(reactiveValue_trans)
         } 
     })
 }

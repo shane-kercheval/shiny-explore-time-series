@@ -69,15 +69,18 @@ shinyServer(function(input, output, session) {
     # filters don't have to be reapplied every time; sacrificing memory for speed 
 
     throttled__var_plots__date_slider <- throttle(reactive(input$var_plots__date_slider), 2000)
+    reactiveValues__vp__transformations <- reactiveValues(message=NULL)  # used to capture the transformations to display on y-axix of graph
     reactive__var_plots__filtered_data <- reactive__var_plots__filtered_data__creator(input,
                                                                                       reactive__source_data,
-                                                                                      throttled__var_plots__date_slider)
+                                                                                      throttled__var_plots__date_slider,
+                                                                                      reactiveValues__vp__transformations)
 
     output$var_plots__date_slider__UI <- renderUI__var_plots__date_slider__UI(reactive__source_data)
     output$var_plots__ts_variables__UI <- renderUI__var_plots__ts_variables__UI(reactive__source_data)
     # creates the ggplot object
     reactive__var_plots__ggplot <- reactive__var_plots__ggplot__creator(input,
-                                                                        reactive__var_plots__filtered_data)
+                                                                        reactive__var_plots__filtered_data,
+                                                                        reactiveValues__vp__transformations)
 
     # stores any messages/warnings that ggplot produces when rendering the plot (outputs below the graph
     #(var_plots__ggplot_messages))
@@ -91,16 +94,19 @@ shinyServer(function(input, output, session) {
     #output$var_plots__variable__UI <- renderUI__var_plots__variable__UI(reactive__source_data)
     observe__var_plots__hide_show_uncollapse_on_dataset_type(session, reactive__source_data)
     reactive__var_plots__season__ggplot <- reactive__var_plots__season__ggplot__creator(input,
-                                                                                        reactive__var_plots__filtered_data)
+                                                                                        reactive__var_plots__filtered_data,
+                                                                                        reactiveValues__vp__transformations)
     output$var_plots__seasonal <- renderPlot__var_plots__seasonal(session,
                                                                   reactive__var_plots__season__ggplot)
     reactive__var_plots__scatter_matrix__ggplot <- reactive__var_plots__scatter_matrix__ggplot__creator(input,
-                                                                                                reactive__var_plots__filtered_data)
+                                                                                                reactive__var_plots__filtered_data,
+                                                                                                reactiveValues__vp__transformations)
     output$var_plots__scatter_matrix <- renderPlot__var_plots__scatter_matrix(session,
                                                                               reactive__var_plots__scatter_matrix__ggplot)
     
     reactive__var_plots__auto_correlation__ggplot <- reactive__var_plots__auto_correlation__ggplot__creator(input,
-                                                                                                            reactive__var_plots__filtered_data)
+                                                                                                            reactive__var_plots__filtered_data,
+                                                                                                            reactiveValues__vp__transformations)
     output$var_plots__auto_correlation <- renderPlot__var_plots__auto_correlation(session,
                                                                                   reactive__var_plots__auto_correlation__ggplot)
     
