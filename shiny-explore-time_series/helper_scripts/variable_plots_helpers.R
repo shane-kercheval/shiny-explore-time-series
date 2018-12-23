@@ -91,11 +91,27 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset) {
 
         log_message_variable('input$var_plots__baseline__forecast_horizon', local_baseline_horizon)
         log_message_variable('input$var_plots__baseline_forecasts', local_baseline_forecasts)
+
+        local_lambda <- input$var_plots__baseline__lambda
+        if(local_lambda == 'None') {
+
+            local_lambda <- NULL
+
+        } else if(local_lambda == 'Auto') {
+
+            local_lambda <- BoxCox.lambda(dataset)
+
+        } else {
+
+            local_lambda <- as.numeric(local_lambda)
+        }
+        log_message_variable('input$var_plots__baseline__lambda', local_lambda)
+
    
         show_PI <- length(local_baseline_forecasts) == 1  # if multiple forecasts, don't show PI
         if('Mean' %in% local_baseline_forecasts) {
 
-            forecast_model <- meanf(dataset, h=local_baseline_horizon)
+            forecast_model <- meanf(dataset, h=local_baseline_horizon, lambda=local_lambda)
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Mean',
@@ -104,7 +120,7 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset) {
 
         if('Naive' %in% local_baseline_forecasts) {
 
-            forecast_model <- naive(dataset, h=local_baseline_horizon)
+            forecast_model <- naive(dataset, h=local_baseline_horizon, lambda=local_lambda)
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Naive',
@@ -113,7 +129,7 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset) {
 
         if('Seasonal Naive' %in% local_baseline_forecasts) {
 
-            forecast_model <- snaive(dataset, h=local_baseline_horizon)
+            forecast_model <- snaive(dataset, h=local_baseline_horizon, lambda=local_lambda)
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Seasonal Naive',
@@ -122,7 +138,7 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset) {
 
         if('Drift' %in% local_baseline_forecasts) {
 
-            forecast_model <- rwf(dataset, h=local_baseline_horizon, drift=TRUE)
+            forecast_model <- rwf(dataset, h=local_baseline_horizon, lambda=local_lambda, drift=TRUE)
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Drift',
@@ -131,7 +147,7 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset) {
 
         if('Auto' %in% local_baseline_forecasts) {
 
-            forecast_model <- forecast(dataset, h=local_baseline_horizon)
+            forecast_model <- forecast(dataset, h=local_baseline_horizon, lambda=local_lambda)
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Auto',
@@ -154,6 +170,11 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset) {
                           check_overlap=TRUE,
                           vjust=0,
                           hjust=0)
+        }
+
+        if(!is.null(local_lambda)) {
+            ggplot_object <- ggplot_object +
+                labs(caption=paste0('NOTE: forecasted with lambda parameter (', round(local_lambda, 3),')'))
         }
 
     }
