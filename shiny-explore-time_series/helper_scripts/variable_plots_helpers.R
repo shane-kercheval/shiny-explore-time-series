@@ -77,7 +77,7 @@ convert_start_end_window <- function(dataset, start_end_window) {
     return (list(s, e))
 }
 
-helper_add_baseline_forecasts <- function(ggplot_object, input, dataset) {
+helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiveValues_model) {
 
     ######################################################################################################
     # BASELINE FORECASTS
@@ -107,7 +107,6 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset) {
         }
         log_message_variable('input$var_plots__baseline__lambda', local_lambda)
 
-   
         show_PI <- length(local_baseline_forecasts) == 1  # if multiple forecasts, don't show PI
         if('Mean' %in% local_baseline_forecasts) {
 
@@ -154,22 +153,32 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset) {
                           PI=show_PI)
         }
 
-        if(input$var_plots__baseline__show_values && length(local_baseline_forecasts) == 1) {
+        if(length(local_baseline_forecasts) == 1) {
 
-            s <- start(forecast_model$mean)
-            e <- end(forecast_model$mean)
-            f <- frequency(forecast_model$mean)
+            log_message_variable('forecast model method', forecast_model$method)
+            reactiveValues_model$model <- forecast_model
 
-            df_forecast_model <- as.data.frame(forecast_model)
-            ts_forecast <- ts(as.data.frame(forecast_model)$`Point Forecast`, start = s, end=e, frequency = f)
+            if(input$var_plots__baseline__show_values) {
 
-            ggplot_object <- ggplot_object + 
-                geom_point(data= ts_forecast) + 
-                geom_text(data=ts_forecast,
-                          aes(label=format_labels(as.numeric(ts_forecast))), 
-                          check_overlap=TRUE,
-                          vjust=0,
-                          hjust=0)
+                s <- start(forecast_model$mean)
+                e <- end(forecast_model$mean)
+                f <- frequency(forecast_model$mean)
+
+                df_forecast_model <- as.data.frame(forecast_model)
+                ts_forecast <- ts(as.data.frame(forecast_model)$`Point Forecast`, start = s, end=e, frequency = f)
+
+                ggplot_object <- ggplot_object + 
+                    geom_point(data= ts_forecast) + 
+                    geom_text(data=ts_forecast,
+                              aes(label=format_labels(as.numeric(ts_forecast))), 
+                              check_overlap=TRUE,
+                              vjust=0,
+                              hjust=0)
+
+            }
+        } else {
+
+            reactiveValues_model$model <- NULL
         }
 
         if(!is.null(local_lambda)) {
@@ -387,7 +396,7 @@ helper_add_transformation_y_axis_label <- function(ggplot_object, reactiveValue_
 }
 
 
-reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_trans) {
+reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_trans, reactiveValues_model) {
     reactive({
 
         req(dataset())
@@ -404,7 +413,7 @@ reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_t
         
         ggplot_object <- local_dataset %>%
             autoplot(facets=input$var_plots__facet) %>%
-            helper_add_baseline_forecasts(input, local_dataset) %>%
+            helper_add_baseline_forecasts(input, local_dataset, reactiveValues_model) %>%
             helper_y_zoom(input, local_dataset) %>%
             helper_add_labels(input, local_dataset) %>%
             helper_add_transformation_y_axis_label(reactiveValue_trans)
@@ -628,6 +637,41 @@ renderPrint__reactiveValues__vp__ggplot_message <- function(message) {
 
     renderPrint({
         cat(message$value)
+    })
+}
+
+renderPlot__var_plots__residuals <- function(session, reactiveValues_model) {
+
+    renderPlot({
+        if(is.null(reactiveValues_model$model)) {
+
+            return (NULL)
+
+        } else {
+
+            withProgress(value=1/2, message='Creating Residuals Graph',{
+
+               checkresiduals(reactiveValues_model$model)
+            })
+        }
+
+    }, height = function() {
+
+        session$clientData$output_var_plots_width * 0.66  # set height to % of width
+    })
+}
+
+renderPrint__var_plots__residuals_ljung_box <- function(reactiveValues_model) {
+
+    renderPrint({
+        if(is.null(reactiveValues_model$model)) {
+
+            return (NULL)
+
+        } else {
+
+            checkresiduals(reactiveValues_model$model, plot=FALSE)
+        }
     })
 }
 

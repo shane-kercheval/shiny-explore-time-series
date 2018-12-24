@@ -324,10 +324,35 @@ log(milk+1, base=2)
 
 lambda <- BoxCox.lambda(milk)
 BoxCox(milk, lambda = lambda)
-
 ```
 
+```{r}
+cat(checkresiduals(naive(milk), plot=FALSE))
 
+
+
+
+cv_mse <- function(cv_result) {
+
+    return (colMeans(cv_result^2, na.rm = TRUE))
+}
+
+cv_rmse <- function(cv_result) {
+
+    return (map_dbl(cv_mse(cv_result), ~ sqrt(.)))
+}
+
+cv_result <- tsCV(milk, forecastfunction = naive, h=8)
+cv_rmse(cv_result)
+cv_result <- tsCV(goog200, forecastfunction = naive, h=8)
+cv_rmse(cv_result)
+cv_mse(cv_result)
+
+
+
+asdf <- naive(milk)
+asdf$method
+```
 
 
 

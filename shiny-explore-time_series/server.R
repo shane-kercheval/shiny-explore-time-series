@@ -78,9 +78,11 @@ shinyServer(function(input, output, session) {
     output$var_plots__date_slider__UI <- renderUI__var_plots__date_slider__UI(reactive__source_data)
     output$var_plots__ts_variables__UI <- renderUI__var_plots__ts_variables__UI(reactive__source_data)
     # creates the ggplot object
+    reactiveValues__vp__model <- reactiveValues(model=NULL)
     reactive__var_plots__ggplot <- reactive__var_plots__ggplot__creator(input,
                                                                         reactive__var_plots__filtered_data,
-                                                                        reactiveValues__vp__transformations)
+                                                                        reactiveValues__vp__transformations,
+                                                                        reactiveValues__vp__model)
 
     # stores any messages/warnings that ggplot produces when rendering the plot (outputs below the graph
     #(var_plots__ggplot_messages))
@@ -109,6 +111,10 @@ shinyServer(function(input, output, session) {
                                                                                                             reactiveValues__vp__transformations)
     output$var_plots__auto_correlation <- renderPlot__var_plots__auto_correlation(session,
                                                                                   reactive__var_plots__auto_correlation__ggplot)
+
+    output$var_plots__residuals <- renderPlot__var_plots__residuals(session, reactiveValues__vp__model)
+    output$var_plots__residuals_ljung_box <- renderPrint__var_plots__residuals_ljung_box(reactiveValues__vp__model)
+
     
     # observe update UI (i.e. seperate out UI changes from creating the plot in `helper_create_time_series_graph()`)
     observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type(session, reactive__var_plots__filtered_data)
