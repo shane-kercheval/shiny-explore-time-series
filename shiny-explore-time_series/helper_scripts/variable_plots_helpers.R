@@ -640,10 +640,10 @@ renderPrint__reactiveValues__vp__ggplot_message <- function(message) {
     })
 }
 
-renderPlot__var_plots__residuals <- function(session, reactiveValues_model) {
+renderPlot__var_plots__residuals <- function(session, dataset, reactiveValues_model) {
 
     renderPlot({
-        if(is.null(reactiveValues_model$model)) {
+        if(is.null(reactiveValues_model$model) || is_multi_time_series(dataset())) {
 
             return (NULL)
 
@@ -801,10 +801,10 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
     })
 }
 
-renderPrint__var_plots__residuals_ljung_box <- function(reactiveValues_model) {
+renderPrint__var_plots__residuals_ljung_box <- function(dataset, reactiveValues_model) {
 
     renderPrint({
-        if(is.null(reactiveValues_model$model)) {
+        if(is.null(reactiveValues_model$model) || is_multi_time_series(dataset())) {
 
             return (NULL)
 

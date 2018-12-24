@@ -112,8 +112,8 @@ shinyServer(function(input, output, session) {
     output$var_plots__auto_correlation <- renderPlot__var_plots__auto_correlation(session,
                                                                                   reactive__var_plots__auto_correlation__ggplot)
 
-    output$var_plots__residuals <- renderPlot__var_plots__residuals(session, reactiveValues__vp__model)
-    output$var_plots__residuals_ljung_box <- renderPrint__var_plots__residuals_ljung_box(reactiveValues__vp__model)
+    output$var_plots__residuals <- renderPlot__var_plots__residuals(session, reactive__var_plots__filtered_data, reactiveValues__vp__model)
+    output$var_plots__residuals_ljung_box <- renderPrint__var_plots__residuals_ljung_box(reactive__var_plots__filtered_data, reactiveValues__vp__model)
 
     output$var_plots__cross_validation <- renderPlot__var_plots__var_plots__cross_validation(session, input, reactive__var_plots__filtered_data)
 
