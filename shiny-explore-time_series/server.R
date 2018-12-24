@@ -115,7 +115,8 @@ shinyServer(function(input, output, session) {
     output$var_plots__residuals <- renderPlot__var_plots__residuals(session, reactiveValues__vp__model)
     output$var_plots__residuals_ljung_box <- renderPrint__var_plots__residuals_ljung_box(reactiveValues__vp__model)
 
-    
+    output$var_plots__cross_validation <- renderPlot__var_plots__var_plots__cross_validation(session, input, reactive__var_plots__filtered_data)
+
     # observe update UI (i.e. seperate out UI changes from creating the plot in `helper_create_time_series_graph()`)
     observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type(session, reactive__var_plots__filtered_data)
 

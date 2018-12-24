@@ -238,6 +238,16 @@ shinyUI(fluidPage(theme="custom.css",
                             tabPanel("Forecast Residuals",
                                 plotOutput(outputId='var_plots__residuals'),
                                 verbatimTextOutput(outputId='var_plots__residuals_ljung_box')
+                            ),
+                            tabPanel("Cross Validation",
+                                tags$br(),
+                                selectInput(inputId='var_plots__cross_validation_metric',
+                                            label='Metric:',
+                                            choices=c('MAE',
+                                                      'RMSE',
+                                                      'MSE'),
+                                            selected='MAE'),
+                                plotOutput(outputId='var_plots__cross_validation')
                             )
                         )
                     ),

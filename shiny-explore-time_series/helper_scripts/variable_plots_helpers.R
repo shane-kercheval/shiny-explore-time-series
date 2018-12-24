@@ -661,6 +661,146 @@ renderPlot__var_plots__residuals <- function(session, reactiveValues_model) {
     })
 }
 
+renderPlot__var_plots__var_plots__cross_validation <- function(session, input, dataset) {
+
+    renderPlot({
+            
+        withProgress(value=1/2, message='Creating Cross Validation Graph', {
+
+            log_message_block_start('Creating `cross validation` graph...')
+
+            req(input$var_plots__cross_validation_metric)
+
+            local_dataset <- dataset()
+            local_baseline_forecasts <- input$var_plots__baseline_forecasts
+            local_baseline_horizon <- input$var_plots__baseline__forecast_horizon
+            local_cross_val_metric <- input$var_plots__cross_validation_metric
+
+            ggplot_object <- NULL
+
+            if(is_single_time_series(local_dataset) &&
+               !is.null(local_baseline_forecasts) && length(local_baseline_forecasts) > 0 &&
+               !is.null(local_baseline_horizon)) {
+
+                log_message_variable('input$var_plots__baseline__forecast_horizon', local_baseline_horizon)
+                log_message_variable('input$var_plots__baseline_forecasts', local_baseline_forecasts)
+                log_message_variable('input$var_plots__cross_validation_metric', local_cross_val_metric)
+
+                # GET THE CORRESPONDING ERROR METRIC
+                cross_valid_function <- NULL
+                if(local_cross_val_metric == 'MAE') {
+
+                    cross_valid_function <- cv_mae
+
+                } else if(local_cross_val_metric == 'RMSE') {
+
+                    cross_valid_function <- cv_rmse
+
+                } else if(local_cross_val_metric == 'MSE') {
+
+                    cross_valid_function <- cv_mse
+
+                } else {
+
+                    stopifnot(FALSE)
+                }
+
+                # CONVERT LAMBDA
+                local_lambda <- input$var_plots__baseline__lambda
+                if(local_lambda == 'None') {
+
+                    local_lambda <- NULL
+
+                } else if(local_lambda == 'Auto') {
+
+                    local_lambda <- BoxCox.lambda(local_dataset)
+
+                } else {
+
+                    local_lambda <- as.numeric(local_lambda)
+                }
+
+                log_message_variable('input$var_plots__baseline__lambda', local_lambda)
+
+                results <- NULL
+                methods <- c()
+                if('Mean' %in% local_baseline_forecasts) {
+
+                    methods <- c(methods, 'Mean')
+                    results <- rbind(results, cross_valid_function(tsCV(local_dataset,
+                                                                        forecastfunction=meanf,
+                                                                        lambda=local_lambda,
+                                                                        h=local_baseline_horizon)))
+                }
+
+                if('Naive' %in% local_baseline_forecasts) {
+
+                    methods <- c(methods, 'Naive')
+                    results <- rbind(results, cross_valid_function(tsCV(local_dataset,
+                                                                        forecastfunction=naive,
+                                                                        lambda=local_lambda,
+                                                                        h=local_baseline_horizon)))
+                }
+
+                if('Seasonal Naive' %in% local_baseline_forecasts) {
+
+                    methods <- c(methods, 'Seasonal Naive')
+                    results <- rbind(results, cross_valid_function(tsCV(local_dataset,
+                                                                        forecastfunction=snaive,
+                                                                        lambda=local_lambda,
+                                                                        h=local_baseline_horizon)))
+                }
+
+                if('Drift' %in% local_baseline_forecasts) {
+
+                    methods <- c(methods, 'Drift')
+                    results <- rbind(results, cross_valid_function(tsCV(local_dataset,
+                                                                        forecastfunction=rwf,
+                                                                        drift=TRUE,
+                                                                        lambda=local_lambda,
+                                                                        h=local_baseline_horizon)))
+                }
+
+                if('Auto' %in% local_baseline_forecasts) {
+
+                    methods <- c(methods, 'Auto')
+                    results <- rbind(results, cross_valid_function(tsCV(local_dataset,
+                                                                        forecastfunction=forecast,
+                                                                        lambda=local_lambda,
+                                                                        h=local_baseline_horizon)))
+                }
+
+                results <- as.data.frame(results)
+                steps_ahead <- colnames(results)
+                results$method <- methods
+
+                ggplot_object <- results %>% 
+                    gather(key, value, -method) %>%
+                    mutate(key = factor(key, levels = steps_ahead)) %>%
+                    ggplot(aes(x=key, y=value, color=method, group=method)) +
+                        geom_line() +
+                        geom_point() +
+                        expand_limits(y=0) +
+                        ylab(local_cross_val_metric) + xlab('Steps Ahead') +
+                        geom_text(aes(label=round(value, 1)), check_overlap=TRUE, vjust=1, hjust=1) +
+                        theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+                if(!is.null(local_lambda)) {
+                    ggplot_object <- ggplot_object +
+                        labs(caption=paste0('NOTE: forecasted with lambda parameter (', round(local_lambda, 3),')'))
+                }
+
+            }
+
+            return (ggplot_object)
+
+        })
+    }, height = function() {
+
+        session$clientData$output_var_plots_width * 0.66  # set height to % of width
+    })
+}
+
 renderPrint__var_plots__residuals_ljung_box <- function(reactiveValues_model) {
 
     renderPrint({

@@ -327,11 +327,6 @@ BoxCox(milk, lambda = lambda)
 ```
 
 ```{r}
-cat(checkresiduals(naive(milk), plot=FALSE))
-
-
-
-
 cv_mse <- function(cv_result) {
 
     return (colMeans(cv_result^2, na.rm = TRUE))
@@ -342,19 +337,35 @@ cv_rmse <- function(cv_result) {
     return (map_dbl(cv_mse(cv_result), ~ sqrt(.)))
 }
 
+cv_mae <- function(cv_result) {
+    
+    return (colSums(abs(cv_result), na.rm = TRUE) / nrow(cv_result))
+}
+
 cv_result <- tsCV(milk, forecastfunction = naive, h=8)
-cv_rmse(cv_result)
-cv_result <- tsCV(goog200, forecastfunction = naive, h=8)
-cv_rmse(cv_result)
-cv_mse(cv_result)
+results <- rbind(NULL, cv_mae(cv_result))
 
+cv_result <- tsCV(milk, forecastfunction = rwf, drift=TRUE, h=8)
+results <- rbind(results, cv_mae(cv_result))
+steps_ahead <- colnames(results)
+results <- as.data.frame(results)
 
+results$method <- c('rwf', 'naive')
 
-asdf <- naive(milk)
-asdf$method
+results %>% 
+    gather(key, value, -method) %>%
+    mutate(key = factor(key, levels = steps_ahead)) %>%
+    ggplot(aes(x=key, y=value, color=method, group=method)) +
+        geom_line() +
+        geom_point() +
+        ylab('MAE') + xlab('Steps Ahead') +
+        geom_text(aes(label=round(value, 1)), check_overlap=TRUE, vjust=1, hjust=1)
 ```
 
-
+```{r}
+tsCV(goog200, forecastfunction = rwf, drift=TRUE, lambda=1, h=8)
+tsCV(goog200, forecastfunction = rwf, drift=TRUE, lambda=0, h=8)
+```
 
 
 

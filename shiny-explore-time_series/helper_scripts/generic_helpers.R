@@ -33,6 +33,21 @@ null_if_select_variable_optional <- function(value) {
     return (value)
 }
 
+cv_mse <- function(cv_result) {
+
+    return (colMeans(cv_result^2, na.rm = TRUE))
+}
+
+cv_rmse <- function(cv_result) {
+
+    return (map_dbl(cv_mse(cv_result), ~ sqrt(.)))
+}
+
+cv_mae <- function(cv_result) {
+    
+    return (colSums(abs(cv_result), na.rm = TRUE) / nrow(cv_result))
+}
+
 easy_regression <- function(dataset,
                             dependent_variable,
                             independent_variables,
