@@ -252,7 +252,33 @@ autoplot(beer_data) +
 
 ```
 
+```{r}
+dataset <- a10
+forecast_model <- forecast(dataset, h=24)
+comment(forecast_model) <- 'Forecast'
 
+model_list <- list(forecast_model)
+forecast_model <- naive(dataset, h=6)
+comment(forecast_model) <- 'Naive'
+#residuals(forecast_model)
+model_list <- c(model_list, list(forecast_model))
+
+
+resid_stats <- map(model_list, ~ {
+    resids <- residuals(.)
+    resid_mean <- mean(resids, na.rm = TRUE)
+    resid_stan_dev <- sd(resids, na.rm = TRUE)
+        
+    return (data.frame(Model=comment(.),
+                       Mean=resid_mean,
+                       `Standard Deviation`=resid_stan_dev,
+                       `Coefficient of Variation`=resid_stan_dev / resid_mean))
+})
+
+resid_stats_df <- do.call("rbind", resid_stats)
+colnames(resid_stats_df) <- str_replace_all(colnames(resid_stats_df), '\\.', ' ')
+resid_stats_df
+```
 
 
 ```{r}
@@ -367,7 +393,15 @@ tsCV(goog200, forecastfunction = rwf, drift=TRUE, lambda=1, h=8)
 tsCV(goog200, forecastfunction = rwf, drift=TRUE, lambda=0, h=8)
 ```
 
+```{r}
+lm_results <- tslm(Consumption ~ Income, data=uschange)
+summary(lm_results)
+```
 
+```{r}
+lm_results <- tslm('Consumption ~ Income', data=uschange)
+summary(lm_results)
+```
 
 
 

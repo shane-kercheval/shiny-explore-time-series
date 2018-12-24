@@ -77,7 +77,7 @@ convert_start_end_window <- function(dataset, start_end_window) {
     return (list(s, e))
 }
 
-helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiveValues_model) {
+helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiveValues_models) {
 
     ######################################################################################################
     # BASELINE FORECASTS
@@ -105,12 +105,19 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
 
             local_lambda <- as.numeric(local_lambda)
         }
-        log_message_variable('input$var_plots__baseline__lambda', local_lambda)
 
+        log_message_variable('input$var_plots__baseline__lambda', local_lambda)
+        local_models <- NULL
         show_PI <- length(local_baseline_forecasts) == 1  # if multiple forecasts, don't show PI
+
         if('Mean' %in% local_baseline_forecasts) {
 
             forecast_model <- meanf(dataset, h=local_baseline_horizon, lambda=local_lambda)
+            comment(forecast_model) <- 'Mean'
+
+            log_message_variable('forecast model method', forecast_model$method)
+            local_models <- c(local_models, list(forecast_model))
+
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Mean',
@@ -120,6 +127,11 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
         if('Naive' %in% local_baseline_forecasts) {
 
             forecast_model <- naive(dataset, h=local_baseline_horizon, lambda=local_lambda)
+            comment(forecast_model) <- 'Naive'
+
+            log_message_variable('forecast model method', forecast_model$method)
+            local_models <- c(local_models, list(forecast_model))
+
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Naive',
@@ -129,6 +141,11 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
         if('Seasonal Naive' %in% local_baseline_forecasts) {
 
             forecast_model <- snaive(dataset, h=local_baseline_horizon, lambda=local_lambda)
+            comment(forecast_model) <- 'Seasonal Naive'
+
+            log_message_variable('forecast model method', forecast_model$method)
+            local_models <- c(local_models, list(forecast_model))
+
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Seasonal Naive',
@@ -138,6 +155,11 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
         if('Drift' %in% local_baseline_forecasts) {
 
             forecast_model <- rwf(dataset, h=local_baseline_horizon, lambda=local_lambda, drift=TRUE)
+            comment(forecast_model) <- 'Drift'
+
+            log_message_variable('forecast model method', forecast_model$method)
+            local_models <- c(local_models, list(forecast_model))
+
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Drift',
@@ -147,16 +169,20 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
         if('Auto' %in% local_baseline_forecasts) {
 
             forecast_model <- forecast(dataset, h=local_baseline_horizon, lambda=local_lambda)
+            comment(forecast_model) <- 'Auto'
+
+            log_message_variable('forecast model method', forecast_model$method)
+            local_models <- c(local_models, list(forecast_model))
+
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Auto',
                           PI=show_PI)
         }
 
-        if(length(local_baseline_forecasts) == 1) {
+        reactiveValues_models$models <- local_models
 
-            log_message_variable('forecast model method', forecast_model$method)
-            reactiveValues_model$model <- forecast_model
+        if(length(local_baseline_forecasts) == 1) {
 
             if(input$var_plots__baseline__show_values) {
 
@@ -176,9 +202,6 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
                               hjust=0)
 
             }
-        } else {
-
-            reactiveValues_model$model <- NULL
         }
 
         if(!is.null(local_lambda)) {
@@ -396,7 +419,7 @@ helper_add_transformation_y_axis_label <- function(ggplot_object, reactiveValue_
 }
 
 
-reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_trans, reactiveValues_model) {
+reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_trans, reactiveValues_models) {
     reactive({
 
         req(dataset())
@@ -413,7 +436,7 @@ reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_t
         
         ggplot_object <- local_dataset %>%
             autoplot(facets=input$var_plots__facet) %>%
-            helper_add_baseline_forecasts(input, local_dataset, reactiveValues_model) %>%
+            helper_add_baseline_forecasts(input, local_dataset, isolate(reactiveValues_models)) %>%
             helper_y_zoom(input, local_dataset) %>%
             helper_add_labels(input, local_dataset) %>%
             helper_add_transformation_y_axis_label(reactiveValue_trans)
@@ -640,10 +663,43 @@ renderPrint__reactiveValues__vp__ggplot_message <- function(message) {
     })
 }
 
-renderPlot__var_plots__residuals <- function(session, dataset, reactiveValues_model) {
+renderDataTable__var_plots__residuals_means <- function(reactiveValues_models) {
+
+    renderDataTable({
+        
+        local_models <- reactiveValues_models$models
+        
+        if(is.null(local_models) || length(local_models) == 0) {
+
+            return (NULL)
+        }
+
+
+        resid_stats <- map(local_models, ~ {
+            resids <- residuals(.)
+            resid_mean <- mean(resids, na.rm = TRUE)
+            resid_stan_dev <- sd(resids, na.rm = TRUE)
+                
+            return (data.frame(Model=comment(.),
+                               Mean=round(resid_mean, 3),
+                               `Standard Deviation`=round(resid_stan_dev, 3),
+                               `Coefficient of Variation`=round(resid_stan_dev / resid_mean, 3)))
+        })
+
+        resid_stats_df <- do.call("rbind", resid_stats)
+        colnames(resid_stats_df) <- str_replace_all(colnames(resid_stats_df), '\\.', ' ')
+        
+        return (resid_stats_df)
+
+    }, options = list(searching = FALSE, paging = FALSE))
+}
+
+renderPlot__var_plots__residuals_plot <- function(session, reactiveValues_models) {
 
     renderPlot({
-        if(is.null(reactiveValues_model$model) || is_multi_time_series(dataset())) {
+
+        local_models <- reactiveValues_models$models
+        if(is.null(local_models) || length(local_models) != 1) {
 
             return (NULL)
 
@@ -651,13 +707,29 @@ renderPlot__var_plots__residuals <- function(session, dataset, reactiveValues_mo
 
             withProgress(value=1/2, message='Creating Residuals Graph',{
 
-               checkresiduals(reactiveValues_model$model)
+               checkresiduals(local_models[[1]])
             })
         }
 
     }, height = function() {
 
         session$clientData$output_var_plots_width * 0.66  # set height to % of width
+    })
+}
+
+renderPrint__var_plots__residuals_ljung_box <- function(reactiveValues_models) {
+
+    renderPrint({
+
+        local_models <- reactiveValues_models$models
+        if(is.null(local_models) || length(local_models) != 1) {
+
+            return (NULL)
+
+        } else {
+
+            checkresiduals(local_models[[1]], plot=FALSE)
+        }
     })
 }
 
@@ -801,20 +873,6 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
     })
 }
 
-renderPrint__var_plots__residuals_ljung_box <- function(dataset, reactiveValues_model) {
-
-    renderPrint({
-        if(is.null(reactiveValues_model$model) || is_multi_time_series(dataset())) {
-
-            return (NULL)
-
-        } else {
-
-            checkresiduals(reactiveValues_model$model, plot=FALSE)
-        }
-    })
-}
-
 ##############################################################################################################
 # UI updates
 ##############################################################################################################
@@ -859,7 +917,7 @@ observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type <- function(se
 
             updateNumericInput(session,
                                inputId='var_plots__baseline__forecast_horizon',
-                               value = 2* frequency(dataset()))
+                               value = 2 * frequency(dataset()))
 
             shinyjs::show('var_plots__baseline__forecast_horizon')
             shinyjs::show('var_plots__baseline_forecasts')
