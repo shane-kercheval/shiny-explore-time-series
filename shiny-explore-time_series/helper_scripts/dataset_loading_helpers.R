@@ -5,7 +5,7 @@
 reactive__source_data__creator <- function(input, custom_triggers) {
     reactive({
 
-        withProgress(value=1/2, message='Loading Data',{
+        withProgress(value=1/2, message="Loading Data",{
 
             req(input$preloaded_dataset)
 
@@ -15,7 +15,7 @@ reactive__source_data__creator <- function(input, custom_triggers) {
             upload_file_path <- input$uploadFile$datapath
             local_preloaded_dataset <- input$preloaded_dataset
 
-            log_message_block_start('Loading Dataset')
+            log_message_block_start("Loading Dataset")
             log_message_variable('input$uploadFile$datapath', upload_file_path)
             log_message_variable('input$preloaded_dataset', local_preloaded_dataset)
 
@@ -23,69 +23,73 @@ reactive__source_data__creator <- function(input, custom_triggers) {
 
             if(is.null(upload_file_path)) {
                 
-                if (local_preloaded_dataset == 'Anti-Diabetic Drug Sales in Australia from 1991 to 2008') {
+                if (local_preloaded_dataset == "Anti-Diabetic Drug Sales in Australia from 1991 to 2008") {
 
                     loaded_dataset <- a10
 
-                } else if (local_preloaded_dataset == 'Total Weekly Air Passenger #s flights (Ansett) Melbourne/Sydney, 1987–1992.') {
+                } else if (local_preloaded_dataset == "Total Weekly Air Passenger #s flights (Ansett) Melbourne/Sydney, 1987–1992.") {
 
                     loaded_dataset <- melsyd
 
-                } else if (local_preloaded_dataset == 'Half-hourly/Daily Electricity Demand for Victoria, Australia, in 2014') {
+                } else if (local_preloaded_dataset == "Half-hourly/Daily Electricity Demand for Victoria, Australia, in 2014") {
 
                     loaded_dataset <- elecdemand
 
-                } else if (local_preloaded_dataset == 'Quarterly Visitor Nights for Various Regions of Australia') {
+                } else if (local_preloaded_dataset == "Quarterly Visitor Nights for Various Regions of Australia") {
 
                     loaded_dataset <- visnights
 
-                } else if (local_preloaded_dataset == 'Quarterly Australian Beer production') {
+                } else if (local_preloaded_dataset == "Quarterly Australian Beer production") {
 
                     loaded_dataset <- ausbeer
 
-                } else if (local_preloaded_dataset == 'Australian monthly electricity production: Jan 1956 – Aug 1995.') {
+                } else if (local_preloaded_dataset == "Australian monthly electricity production: Jan 1956 – Aug 1995.") {
 
                     loaded_dataset <- elec
 
-                } else if (local_preloaded_dataset == 'International Arrivals to Australia') {
+                } else if (local_preloaded_dataset == "International Arrivals to Australia") {
 
                     loaded_dataset <- arrivals
 
-                } else if (local_preloaded_dataset == 'Monthly Total # of Pigs Slaughtered in Victoria, Australia (Jan 1980 – Aug 1995)') {
+                } else if (local_preloaded_dataset == "Monthly Total # of Pigs Slaughtered in Victoria, Australia (Jan 1980 – Aug 1995)") {
 
                     loaded_dataset <- pigs
 
-                } else if (local_preloaded_dataset == 'Daily Closing Stock Prices of Google Inc (All)') {
+                } else if (local_preloaded_dataset == "Daily Closing Stock Prices of Google Inc (All)") {
 
                     loaded_dataset <- goog
 
-                } else if (local_preloaded_dataset == 'Daily Closing Stock Prices of Google Inc (200)') {
+                } else if (local_preloaded_dataset == "Daily Closing Stock Prices of Google Inc (200)") {
 
                     loaded_dataset <- goog200
 
-                } else if (local_preloaded_dataset == 'Price of dozen eggs in US, 1900–1993, in constant dollars.') {
+                } else if (local_preloaded_dataset == "Price of dozen eggs in US, 1900–1993, in constant dollars.") {
 
                     loaded_dataset <- eggs
 
-                } else if (local_preloaded_dataset == '% Changes in Consumption/Income/Production?Savings/Unemployment Rates for the US, 1960 to 2016.') {
+                } else if (local_preloaded_dataset == "% Changes in Consumption/Income/Production?Savings/Unemployment Rates for the US, 1960 to 2016.") {
 
                     loaded_dataset <- uschange
                 
-                } else if (local_preloaded_dataset == 'Australian Monthly Gas Production') {
+                } else if (local_preloaded_dataset == "Australian Monthly Gas Production") {
 
                     loaded_dataset <- gas
                 
-                } else if (local_preloaded_dataset == 'Daily Morning Gold Prices') {
+                } else if (local_preloaded_dataset == "Daily Morning Gold Prices") {
 
                     loaded_dataset <- gold
                 
-                } else if (local_preloaded_dataset == 'Quarterly Production of Woollen Yarn in Australia') {
+                } else if (local_preloaded_dataset == "Quarterly Production of Woollen Yarn in Australia") {
 
                     loaded_dataset <- woolyrnq
                 
-                } else if (local_preloaded_dataset == 'Dow-Jones index on 251 trading days ending 26 Aug 1994.') {
+                } else if (local_preloaded_dataset == "Dow-Jones index on 251 trading days ending 26 Aug 1994.") {
 
                     loaded_dataset <- dj
+
+                } else if (local_preloaded_dataset == "Winning times (in minutes) for the Boston Marathon Men's Open Division. 1897-2016.") {
+
+                    loaded_dataset <- marathon
                 }
 
             } else {
@@ -101,8 +105,8 @@ reactive__source_data__creator <- function(input, custom_triggers) {
                 } else {
 
                     showModal(
-                        modalDialog(title = 'Unknown File Type',
-                                    'Only `.csv` and `.RDS` files are supported at this time.'))
+                        modalDialog(title = "Unknown File Type",
+                                    "Only `.csv` and `.RDS` files are supported at this time."))
                 }
             }
         })

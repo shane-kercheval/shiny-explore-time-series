@@ -9,7 +9,7 @@ reactive__var_plots__filtered_data__creator <- function(input, dataset, date_sli
         req(date_slider())
         input$var_plots__variables_apply  # trigger update from apply, not from selecting the variables
 
-        log_message_block_start('Creating filtered dataset...')
+        log_message_block_start("Creating filtered dataset...")
 
         local_dataset <- dataset()  # clear on new datasets
 
@@ -179,6 +179,23 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Drift',
+                          PI=show_PI)
+        }
+
+        if('Natural Cubic Smoothing Spline' %in% local_baseline_forecasts) {
+
+            forecast_model <- splinef(dataset,
+                                      h=local_baseline_horizon,
+                                      lambda=local_lambda,
+                                      biasadj=local_biasadj)
+            comment(forecast_model) <- 'Natural Cubic Smoothing Spline'
+
+            log_message_variable('forecast model method', forecast_model$method)
+            local_models <- c(local_models, list(forecast_model))
+
+            ggplot_object <- ggplot_object +
+                autolayer(forecast_model,
+                          series='Natural Cubic Smoothing Spline',
                           PI=show_PI)
         }
 
@@ -473,7 +490,7 @@ reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_t
             req(input$var_plots__baseline__forecast_horizon)
         }
 
-        log_message_block_start('Creating `time-series` graph...')
+        log_message_block_start("Creating `time-series` graph...")
 
         # reactive data
         local_dataset <- dataset()
@@ -493,7 +510,7 @@ reactive__var_plots__auto_correlation__ggplot__creator <- function(input, datase
 
         req(dataset())
 
-        log_message_block_start('Creating `auto-correlation` graph...')
+        log_message_block_start("Creating `auto-correlation` graph...")
 
         # reactive data
         local_dataset <- dataset()
@@ -524,7 +541,7 @@ reactive__var_plots__season__ggplot__creator <- function(input, dataset, reactiv
             req(input$var_plots__baseline__forecast_horizon)
         }
 
-        log_message_block_start('Creating `season` graph...')
+        log_message_block_start("Creating `season` graph...")
 
         # reactive data
         local_dataset <- dataset()
@@ -571,7 +588,7 @@ reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset,
             req(input$var_plots__baseline__forecast_horizon)
         }
 
-        log_message_block_start('Creating `scatter-matrix` graph...')
+        log_message_block_start("Creating `scatter-matrix` graph...")
 
         # reactive data
         local_dataset <- dataset()
@@ -637,7 +654,7 @@ renderPlot__variable_plot <- function(session, ggplot_object, messages) {
 
     renderPlot({
 
-        withProgress(value=1/2, message='Creating Time-Series Graph',{
+        withProgress(value=1/2, message="Creating Time-Series Graph",{
 
            messages$value <- capture_messages_warnings(function() print(ggplot_object()))
            log_message_variable('messages$value', messages$value)
@@ -744,7 +761,7 @@ renderPlot__var_plots__residuals_plot <- function(session, reactiveValues_models
 
         } else {
 
-            withProgress(value=1/2, message='Creating Residuals Graph',{
+            withProgress(value=1/2, message="Creating Residuals Graph",{
 
                checkresiduals(local_models[[1]])
             })
@@ -776,9 +793,9 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
 
     renderPlot({
             
-        withProgress(value=1/2, message='Creating Cross Validation Graph', {
+        withProgress(value=1/2, message="Creating Cross Validation Graph",{
 
-            log_message_block_start('Creating `cross validation` graph...')
+            log_message_block_start("Creating `cross validation` graph...")
 
             req(input$var_plots__cross_validation_metric)
 
@@ -873,6 +890,16 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
                     results <- rbind(results, cross_valid_function(tsCV(local_dataset,
                                                                         forecastfunction=rwf,
                                                                         drift=TRUE,
+                                                                        lambda=local_lambda,
+                                                                        biasadj=local_biasadj,
+                                                                        h=local_baseline_horizon)))
+                }
+
+                if('Natural Cubic Smoothing Spline' %in% local_baseline_forecasts) {
+
+                    methods <- c(methods, 'Natural Cubic Smoothing Spline')
+                    results <- rbind(results, cross_valid_function(tsCV(local_dataset,
+                                                                        forecastfunction=splinef,
                                                                         lambda=local_lambda,
                                                                         biasadj=local_biasadj,
                                                                         h=local_baseline_horizon)))

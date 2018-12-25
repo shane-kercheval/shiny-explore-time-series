@@ -404,6 +404,7 @@ summary(lm_results)
 ```
 
 ```{r}
+?marathon
 fitted(forecast(goog))
 ```
 
