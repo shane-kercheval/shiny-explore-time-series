@@ -44,14 +44,48 @@ eventReactive__regression__results__creator <- function(input, dataset) {
 ##############################################################################################################
 # INPUT
 ##############################################################################################################
+helper_create_ts_regression_variables <- function(dataset, variables_to_exclude=NULL){
+
+    independent_variables <- c("Trend", "Series")
+
+    if(is_single_time_series(dataset)) {
+
+        independent_variables <- c(independent_variables, single_time_series_variable_name)
+
+    } else {
+
+        independent_variables <- c(independent_variables, colnames(dataset))
+    }
+
+    if(!is.null(variables_to_exclude)) {
+
+        independent_variables <- independent_variables[! independent_variables %in% variables_to_exclude]
+    }
+
+    return (independent_variables)
+}
+
 renderUI__regression__dependent_variable__UI <- function(dataset) {
 
     renderUI({
 
+        variables <- helper_create_ts_regression_variables(dataset(),
+                                                           variables_to_exclude=c("Trend", "Series"))
+
+
+        if(is_single_time_series(dataset())) {
+
+            selected <- single_time_series_variable_name
+
+        } else {
+
+            selected <- select_variable
+        }
+
         selectInput(inputId='regression__dependent_variable',
                     label='Dependent Variable',
-                    choices=c(select_variable, colnames(dataset())),
-                    selected=select_variable,
+                    choices=c(select_variable, variables),
+                    selected=selected,
                     multiple=FALSE,
                     selectize=TRUE,
                     width=500,
@@ -65,13 +99,13 @@ renderUI__regression__independent_variables__UI <- function(input, dataset) {
 
         req(input$regression__dependent_variable)
 
-        column_names <- colnames(dataset())
-        possible_variables <- column_names[! column_names %in% input$regression__dependent_variable]        
+        independent_variables <- helper_create_ts_regression_variables(dataset(),
+                                                                       variables_to_exclude=input$regression__dependent_variable)
 
         checkboxGroupInput(inputId='regression__independent_variables',
-                           label='Independent Variables',
-                           choices=possible_variables,
-                           selected=possible_variables,
+                           label="Independent Variables",
+                           choices=independent_variables,
+                           selected=independent_variables,
                            inline=FALSE,
                            width=NULL)
     })
@@ -105,12 +139,12 @@ renderUI__regression__interaction_term1__UI <- function(input, dataset) {
         req(input$regression__dependent_variable)
 
         # cannot select dependent_variable
-        column_names <- colnames(dataset())
-        possible_variables <- column_names[! column_names %in% input$regression__dependent_variable]
+        variables <- helper_create_ts_regression_variables(dataset(),
+                                                               variables_to_exclude=input$regression__dependent_variable)
 
         selectInput(inputId='regression__interaction_term1',
                     label='Interaction Variable 1',
-                    choices=c(select_variable, possible_variables),
+                    choices=c(select_variable, variables),
                     selected=select_variable,
                     multiple=FALSE,
                     selectize=TRUE,
@@ -127,13 +161,13 @@ renderUI__regression__interaction_term2__UI <- function(input, dataset) {
         req(input$regression__interaction_term1)
 
         # cannot select dependent_variable or the first term
-        column_names <- colnames(dataset())
-        possible_variables <- column_names[! column_names %in% c(input$regression__dependent_variable,
-                                                                 input$regression__interaction_term1)]
+        variables <- helper_create_ts_regression_variables(dataset(),
+                                                           variables_to_exclude=c(input$regression__dependent_variable,
+                                                                                  input$regression__interaction_term1))
 
         selectInput(inputId='regression__interaction_term2',
                     label='Interaction Variable 2',
-                    choices=c(select_variable, possible_variables),
+                    choices=c(select_variable, variables),
                     selected=select_variable,
                     multiple=FALSE,
                     selectize=TRUE,
@@ -149,12 +183,12 @@ observeEvent__regression__toggle_all_ind_variables <- function(input, dataset, s
         # if none selected, select all, otherwise (if any selected); unselect all
         if(length(input$regression__independent_variables) == 0) {
 
-            column_names <- colnames(dataset())
-            possible_variables <- column_names[! column_names %in% input$regression__dependent_variable]
+            variables <- helper_create_ts_regression_variables(dataset(),
+                                                               variables_to_exclude=input$regression__dependent_variable)
 
             updateCheckboxGroupInput(session=session,
                                      inputId='regression__independent_variables',
-                                     selected=possible_variables)
+                                     selected=variables)
 
         } else {
 

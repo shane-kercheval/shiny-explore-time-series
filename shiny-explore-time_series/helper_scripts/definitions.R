@@ -3,6 +3,8 @@ should_log_message <- TRUE
 select_variable <- "<Select>"
 select_variable_optional <- "<Select (optional)>"
 
+single_time_series_variable_name <- "Loaded Data"
+
 theme_base_size <- 16
 
 
