@@ -196,6 +196,12 @@ shinyUI(fluidPage(theme="custom.css",
                                   title='Applies Box-Cox transformation internally and back-transforms forecast values.',
                                   placement = 'bottom', trigger = 'hover'),
                         tags$div(class='bold_checkbox_input',
+                                 checkboxInput(inputId='var_plots__baseline__biasadj', label='Bias Adjustment', value=FALSE)
+                        ),
+                        bsTooltip(id='var_plots__baseline__biasadj',
+                                  title='Use adjusted back-transformed mean for Box-Cox transformations. If transformed data is used to produce forecasts and fitted values, a regular back transformation will result in median forecasts. If biasadj is TRUE, an adjustment will be made to produce mean forecasts and fitted values.',
+                                  placement = 'bottom', trigger = 'hover'),
+                        tags$div(class='bold_checkbox_input',
                                  checkboxInput(inputId='var_plots__baseline__show_values', label='Show Forecast Values', value=FALSE)
                         ),
                         style='default'

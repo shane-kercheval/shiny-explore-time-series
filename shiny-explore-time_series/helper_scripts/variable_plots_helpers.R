@@ -105,14 +105,20 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
 
             local_lambda <- as.numeric(local_lambda)
         }
-
         log_message_variable('input$var_plots__baseline__lambda', local_lambda)
+
+        local_biasadj <- input$var_plots__baseline__biasadj
+        log_message_variable('input$var_plots__baseline__biasadj', local_biasadj)
+
         local_models <- NULL
         show_PI <- length(local_baseline_forecasts) == 1  # if multiple forecasts, don't show PI
 
         if('Mean' %in% local_baseline_forecasts) {
 
-            forecast_model <- meanf(dataset, h=local_baseline_horizon, lambda=local_lambda)
+            forecast_model <- meanf(dataset,
+                                    h=local_baseline_horizon,
+                                    lambda=local_lambda,
+                                    biasadj=local_biasadj)
             comment(forecast_model) <- 'Mean'
 
             log_message_variable('forecast model method', forecast_model$method)
@@ -126,7 +132,10 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
 
         if('Naive' %in% local_baseline_forecasts) {
 
-            forecast_model <- naive(dataset, h=local_baseline_horizon, lambda=local_lambda)
+            forecast_model <- naive(dataset,
+                                    h=local_baseline_horizon,
+                                    lambda=local_lambda,
+                                    biasadj=local_biasadj)
             comment(forecast_model) <- 'Naive'
 
             log_message_variable('forecast model method', forecast_model$method)
@@ -140,7 +149,10 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
 
         if('Seasonal Naive' %in% local_baseline_forecasts) {
 
-            forecast_model <- snaive(dataset, h=local_baseline_horizon, lambda=local_lambda)
+            forecast_model <- snaive(dataset,
+                                     h=local_baseline_horizon,
+                                     lambda=local_lambda,
+                                     biasadj=local_biasadj)
             comment(forecast_model) <- 'Seasonal Naive'
 
             log_message_variable('forecast model method', forecast_model$method)
@@ -154,7 +166,11 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
 
         if('Drift' %in% local_baseline_forecasts) {
 
-            forecast_model <- rwf(dataset, h=local_baseline_horizon, lambda=local_lambda, drift=TRUE)
+            forecast_model <- rwf(dataset,
+                                  h=local_baseline_horizon,
+                                  lambda=local_lambda,
+                                  biasadj=local_biasadj,
+                                  drift=TRUE)
             comment(forecast_model) <- 'Drift'
 
             log_message_variable('forecast model method', forecast_model$method)
@@ -168,7 +184,10 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
 
         if('Auto' %in% local_baseline_forecasts) {
 
-            forecast_model <- forecast(dataset, h=local_baseline_horizon, lambda=local_lambda)
+            forecast_model <- forecast(dataset,
+                                       h=local_baseline_horizon,
+                                       lambda=local_lambda,
+                                       biasadj=local_biasadj)
             comment(forecast_model) <- 'Auto'
 
             log_message_variable('forecast model method', forecast_model$method)
@@ -182,7 +201,7 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
 
         reactiveValues_models$models <- local_models
 
-        if(length(local_baseline_forecasts) == 1) {
+        if(length(local_baseline_forecasts) == 1) {  # wrap this in function and repeat for each model in list
 
             if(input$var_plots__baseline__show_values) {
 
@@ -191,7 +210,10 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
                 f <- frequency(forecast_model$mean)
 
                 df_forecast_model <- as.data.frame(forecast_model)
-                ts_forecast <- ts(as.data.frame(forecast_model)$`Point Forecast`, start = s, end=e, frequency = f)
+                ts_forecast <- ts(as.data.frame(forecast_model)$`Point Forecast`,
+                                  start = s,
+                                  end=e,
+                                  frequency = f)
 
                 ggplot_object <- ggplot_object + 
                     geom_point(data= ts_forecast) + 
@@ -204,9 +226,19 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             }
         }
 
-        if(!is.null(local_lambda)) {
-            ggplot_object <- ggplot_object +
-                labs(caption=paste0('NOTE: forecasted with lambda parameter (', round(local_lambda, 3),')'))
+        if(!is.null(local_lambda) || local_biasadj) {
+
+            caption <- ''
+            if(!is.null(local_lambda)) {
+
+                caption <- paste0('NOTE: forecasted with lambda parameter (', round(local_lambda, 3),')')
+            }
+            if(local_biasadj) {
+
+                caption <- paste0(c(caption, 'NOTE: using Bias Adjustment'), collapse='\n')
+            }
+
+            ggplot_object <- ggplot_object + labs(caption=caption)
         }
 
     }
@@ -448,11 +480,6 @@ reactive__var_plots__auto_correlation__ggplot__creator <- function(input, datase
     reactive({
 
         req(dataset())
-
-        if(is_single_time_series(dataset())) {
-
-            req(input$var_plots__baseline__forecast_horizon)
-        }
 
         log_message_block_start('Creating `auto-correlation` graph...')
 
@@ -791,8 +818,10 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
 
                     local_lambda <- as.numeric(local_lambda)
                 }
-
                 log_message_variable('input$var_plots__baseline__lambda', local_lambda)
+
+                local_biasadj <- input$var_plots__baseline__biasadj
+                log_message_variable('input$var_plots__baseline__biasadj', local_biasadj)
 
                 results <- NULL
                 methods <- c()
@@ -802,6 +831,7 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
                     results <- rbind(results, cross_valid_function(tsCV(local_dataset,
                                                                         forecastfunction=meanf,
                                                                         lambda=local_lambda,
+                                                                        biasadj=local_biasadj,
                                                                         h=local_baseline_horizon)))
                 }
 
@@ -811,6 +841,7 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
                     results <- rbind(results, cross_valid_function(tsCV(local_dataset,
                                                                         forecastfunction=naive,
                                                                         lambda=local_lambda,
+                                                                        biasadj=local_biasadj,
                                                                         h=local_baseline_horizon)))
                 }
 
@@ -820,6 +851,7 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
                     results <- rbind(results, cross_valid_function(tsCV(local_dataset,
                                                                         forecastfunction=snaive,
                                                                         lambda=local_lambda,
+                                                                        biasadj=local_biasadj,
                                                                         h=local_baseline_horizon)))
                 }
 
@@ -830,6 +862,7 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
                                                                         forecastfunction=rwf,
                                                                         drift=TRUE,
                                                                         lambda=local_lambda,
+                                                                        biasadj=local_biasadj,
                                                                         h=local_baseline_horizon)))
                 }
 
@@ -839,6 +872,7 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
                     results <- rbind(results, cross_valid_function(tsCV(local_dataset,
                                                                         forecastfunction=forecast,
                                                                         lambda=local_lambda,
+                                                                        biasadj=local_biasadj,
                                                                         h=local_baseline_horizon)))
                 }
 
@@ -857,9 +891,19 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
                         geom_text(aes(label=round(value, 1)), check_overlap=TRUE, vjust=1, hjust=1) +
                         theme(axis.text.x = element_text(angle = 30, hjust = 1))
 
-                if(!is.null(local_lambda)) {
-                    ggplot_object <- ggplot_object +
-                        labs(caption=paste0('NOTE: forecasted with lambda parameter (', round(local_lambda, 3),')'))
+                if(!is.null(local_lambda) || local_biasadj) {
+
+                    caption <- ''
+                    if(!is.null(local_lambda)) {
+
+                        caption <- paste0('NOTE: forecasted with lambda parameter (', round(local_lambda, 3),')')
+                    }
+                    if(local_biasadj) {
+
+                        caption <- paste0(c(caption, 'NOTE: using Bias Adjustment'), collapse='\n')
+                    }
+
+                    ggplot_object <- ggplot_object + labs(caption=caption)
                 }
 
             }
