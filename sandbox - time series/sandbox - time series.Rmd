@@ -403,6 +403,9 @@ lm_results <- tslm('Consumption ~ Income', data=uschange)
 summary(lm_results)
 ```
 
+```{r}
+fitted(forecast(goog))
+```
 
 
 

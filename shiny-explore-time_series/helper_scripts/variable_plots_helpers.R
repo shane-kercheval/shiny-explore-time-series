@@ -201,7 +201,15 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
 
         reactiveValues_models$models <- local_models
 
-        if(input$var_plots__baseline__show_values) {
+        if(input$var_plots__baseline__show_fitted_line) {
+            for(model in local_models) {
+
+                ggplot_object <- ggplot_object + 
+                    autolayer(fitted(model), series=comment(model))
+            }
+        }
+
+        if(input$var_plots__baseline__show_forecast_values) {
 
             add_forecasts_from_model <- function(ggplot_object, model) {
 
