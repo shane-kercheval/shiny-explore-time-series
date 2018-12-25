@@ -201,28 +201,32 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
 
         reactiveValues_models$models <- local_models
 
-        if(length(local_baseline_forecasts) == 1) {  # wrap this in function and repeat for each model in list
+        if(input$var_plots__baseline__show_values) {
 
-            if(input$var_plots__baseline__show_values) {
+            add_forecasts_from_model <- function(ggplot_object, model) {
 
-                s <- start(forecast_model$mean)
-                e <- end(forecast_model$mean)
-                f <- frequency(forecast_model$mean)
+                s <- start(model$mean)
+                e <- end(model$mean)
+                f <- frequency(model$mean)
 
-                df_forecast_model <- as.data.frame(forecast_model)
-                ts_forecast <- ts(as.data.frame(forecast_model)$`Point Forecast`,
+                df_model <- as.data.frame(model)
+                ts_forecast <- ts(as.data.frame(model)$`Point Forecast`,
                                   start = s,
                                   end=e,
                                   frequency = f)
 
-                ggplot_object <- ggplot_object + 
+                return (ggplot_object + 
                     geom_point(data= ts_forecast) + 
                     geom_text(data=ts_forecast,
                               aes(label=format_labels(as.numeric(ts_forecast))), 
                               check_overlap=TRUE,
                               vjust=0,
-                              hjust=0)
+                              hjust=0))
+            }
 
+            for(model in local_models) {
+
+                ggplot_object <- ggplot_object %>% add_forecasts_from_model(model)
             }
         }
 
