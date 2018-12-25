@@ -32,7 +32,6 @@ reactive__var_plots__filtered_data__creator <- function(input, dataset, date_sli
             local_ts_variables <- isolate(input$var_plots__ts_variables)  # don't update when selecting variables
             log_message_variable('input$var_plots__ts_variables', local_ts_variables)
 
-
             if(is.null(local_ts_variables)) {
 
                 local_dataset <- NULL
@@ -50,7 +49,6 @@ reactive__var_plots__filtered_data__creator <- function(input, dataset, date_sli
         local_dataset <- local_dataset %>% helper_apply_transformations(input, reactiveValue_trans)
 
         return (local_dataset)
-
     })
 }
 
@@ -706,6 +704,7 @@ renderPlot__var_plots__scatter_matrix <- function(session, ggplot_object) {
 }
 
 renderPlot__var_plots__auto_correlation <- function(session, ggplot_object) {
+
     return(renderPlot__var_plots__helper(session,
                                          ggplot_object,
                                          'Creating Auto-Correlation Graph',
