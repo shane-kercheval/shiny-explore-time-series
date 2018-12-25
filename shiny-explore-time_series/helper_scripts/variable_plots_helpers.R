@@ -15,6 +15,19 @@ reactive__var_plots__filtered_data__creator <- function(input, dataset, date_sli
 
         # filter on window
         local_start_end <- date_slider()
+
+        # if the start of the date slider is before the start of the time-series or
+        # the end of the date slider is after the end of the time-series, we've probably switched datasets
+        # and the slider is not valid, so let's skip the update and this code will be triggered when the 
+        # date_slider is updated
+        if(local_start_end[1] < start(local_dataset)[1] || local_start_end[2] > end(local_dataset)[1]) {
+
+            log_message_variable('date slider before start of ts:', local_start_end[1] < start(local_dataset)[1])
+            log_message_variable('date slider after end of ts:', local_start_end[2] > end(local_dataset)[1])
+            log_message('Aborting creation of filtered dataset...')
+            return (NULL)
+        }
+
         local_start_end <- convert_start_end_window(local_dataset, local_start_end)
         log_message_variable('input$var_plots__date_slider', paste0(local_start_end, collapse='-'))
         local_dataset <- window(local_dataset,
