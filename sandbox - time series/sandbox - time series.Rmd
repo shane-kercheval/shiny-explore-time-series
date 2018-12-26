@@ -427,30 +427,95 @@ na.omit(dataset)
 ```
 
 ```{r}
-# NOTE: we have to lag at least 1 value, unless we are using trend/season
+regression_build_formula <- function(dependent_variable, independent_variables=NULL, interaction_variables=NULL) {
+
+    if(is.null(interaction_variables)) {
+        
+        interaction_variables_formula <- ''
+    
+    } else {
+
+        interaction_variables_formula <- paste(map_chr(interaction_variables, ~ paste(., collapse =' * ')),
+                                               collapse = ' + ')
+    }
+
+    if(is.null(independent_variables) || length(independent_variables) == 0) {
+
+        independent_variables_formula <- interaction_variables_formula
+
+    } else if(is.null(interaction_variables) || length(interaction_variables) == 0) {
+
+        independent_variables_formula <- paste(independent_variables, collapse =' + ')
+
+    } else {
+        
+        independent_variables_formula <- paste(interaction_variables_formula,
+                                               '+',
+                                               paste(independent_variables, collapse =' + '))
+    }
+
+    if(dependent_variable == single_time_series_variable_name) {
+
+        dependent_variable <- 'dataset'
+    }
+
+    return (paste(dependent_variable, '~', independent_variables_formula))
+}
+
+regression_build_formula(dependent_variable = 'Loaded Data',
+                         independent_variables = c('trend', 'season'))
+
+regression_build_formula(dependent_variable = 'NSWMetro',
+                         independent_variables = c('trend', 'season', 'NSWNthCo'))
+```
+
+```{r}
+# NOTE: we have to lag at least 1 value, **unless we are using trend/season**
 # if we forecast prediction of prediction, we only have to lag1
 # if we forecast with actual values, we have to lag as far back as we want to predict (i.e. predict 10 periods in future, lag at least 10 periods behind)
 
+# MAKE BOTH METHODS WORK ON SINGLE/MULTI variable datasets
+
+
 dataset <- a10
-ts_model <- tslm(dataset ~ trend + season)
-ts_forecast <- forecast(ts_model, h = 10)
-
-dataset <- visnights
-ts_model <- tslm(NSWMetro ~ trend + season + NSWNthCo, data = dataset)
-# forecast automatically gives trend/season as can be observed with the ts_forecast results i.e. row names
-
+independent_variables = c('trend', 'season')
+#independent_variables = c('trend')
+#independent_variables = c('season')
 predict_horizon <- 20
-ts_forecast <- NULL
-predictions <- c(4.886140)  # starting value e.g. lagged value
-for(horizon in 1:predict_horizon) {
-    print(horizon)
-    # last predition has all x predictions
-    ts_forecast <- forecast(ts_model, newdata = data.frame(NSWNthCo=predictions))
-    temp <- as.data.frame(ts_forecast)$`Point Forecast`
-    predictions <- c(predictions, temp[length(temp)])
+reg_formula <- regression_build_formula(dependent_variable = 'Loaded Data',
+                                        independent_variables = independent_variables)
+
+# dataset <- visnights
+# independent_variables = c('trend', 'season', 'NSWNthCo')
+# predict_horizon <- 20  # if we don't include any independent variables other than trend/season
+# predict_horizon <- 4
+# reg_formula <- regression_build_formula(dependent_variable = 'NSWMetro',
+#                                         independent_variables = independent_variables)
+
+
+ts_model <- tslm(formula = reg_formula, data = dataset)
+
+# if we only forecast trend and/or season, we don't need a lag, just forecast however many periods
+if(all(independent_variables %in% c('trend', 'season'))) {
+    
+    ts_forecast <- forecast(ts_model, h=predict_horizon)
+    
+} else {
+    
+    # FIGURE OUT LAG
+
+    ts_forecast <- NULL
+    predictions <- c(4.886140)  # starting value e.g. lagged value
+    for(horizon in 1:predict_horizon) {
+        print(horizon)
+        # last predition has all x predictions
+        ts_forecast <- forecast(ts_model, newdata = data.frame(NSWNthCo=predictions))
+        temp <- as.data.frame(ts_forecast)$`Point Forecast`
+        predictions <- c(predictions, temp[length(temp)])
+    }
+    #ts_forecast
+    #rownames(as.data.frame(ts_forecast)
 }
-ts_forecast
-#rownames(as.data.frame(ts_forecast)
 
 autoplot(dataset) +
     autolayer(fitted(ts_model), series = 'Regression') +
