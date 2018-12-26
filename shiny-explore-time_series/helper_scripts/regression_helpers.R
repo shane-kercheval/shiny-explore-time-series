@@ -1,8 +1,4 @@
-easy_regression <- function(dataset,
-                            dependent_variable,
-                            independent_variables,
-                            interaction_variables=NULL,
-                            polynomial=NULL) {
+regression_build_formula <- function(dependent_variable, independent_variables=NULL, interaction_variables=NULL) {
 
     if(is.null(interaction_variables)) {
         
@@ -11,7 +7,7 @@ easy_regression <- function(dataset,
     } else {
 
         interaction_variables_formula <- paste(map_chr(interaction_variables, ~ paste(., collapse =' * ')),
-                                                   collapse = ' + ')
+                                               collapse = ' + ')
     }
 
     if(is.null(independent_variables) || length(independent_variables) == 0) {
@@ -29,17 +25,27 @@ easy_regression <- function(dataset,
                                                paste(independent_variables, collapse =' + '))
     }
 
-    if(is_single_time_series(dataset)) {
+    if(dependent_variable == single_time_series_variable_name) {
 
         dependent_variable <- 'dataset'
     }
 
-    formula <- paste(dependent_variable, '~', independent_variables_formula)
+    return (paste(dependent_variable, '~', independent_variables_formula))
+}
 
+easy_regression <- function(dataset,
+                            dependent_variable,
+                            independent_variables,
+                            interaction_variables=NULL,
+                            polynomial=NULL) {
 
-    # get indexes of rows that contain NA, and remove
+    
+    formula <- regression_build_formula(dependent_variable, independent_variables, interaction_variables)
+
+    # variables other than trend/season
     dataset_variables <- independent_variables[! independent_variables %in% built_in_ts_variables]
 
+    # get indexes of rows that contain NA, and remove
     if(length(dataset_variables) == 0) {
 
         indexes_to_remove <- which(!complete.cases(dataset))
