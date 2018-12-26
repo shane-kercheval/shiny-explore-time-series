@@ -90,8 +90,16 @@ eventReactive__regression__results__creator <- function(input, dataset) {
                                                 local_interaction_term2))
             }
 
-            # updates to reactive variables will not trigger an update here, only regression__run_button
-            results <- easy_regression(dataset=dataset(),
+            local_dataset <- dataset()
+            local_date_slider <- input$regression__date_slider
+            local_date_slider <- convert_start_end_window(local_dataset, local_date_slider)
+            log_message_variable('input$regression__date_slider', paste0(local_date_slider, collapse='-'))
+            local_dataset <- window(local_dataset,
+                                start=local_date_slider[[1]],
+                                end=local_date_slider[[2]])
+
+
+            results <- easy_regression(dataset=local_dataset,
                                        dependent_variable=input$regression__dependent_variable,
                                        independent_variables=input$regression__independent_variables,
                                        # list of vectors, each element in the list is a pair of interaction terms

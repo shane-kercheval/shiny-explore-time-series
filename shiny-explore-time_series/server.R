@@ -75,7 +75,7 @@ shinyServer(function(input, output, session) {
                                                                                       throttled__var_plots__date_slider,
                                                                                       reactiveValues__vp__transformations)
 
-    output$var_plots__date_slider__UI <- renderUI__var_plots__date_slider__UI(reactive__source_data)
+    output$var_plots__date_slider__UI <- renderUI({ create_date_slider(dataset=reactive__source_data(), inputId='var_plots__date_slider') })
     output$var_plots__ts_variables__UI <- renderUI__var_plots__ts_variables__UI(reactive__source_data)
     # creates the ggplot object
     reactiveValues__vp__models <- reactiveValues(models=NULL)
@@ -140,6 +140,9 @@ shinyServer(function(input, output, session) {
     ##########################################################################################################
     # Run Regression when user clicks Run button
     eventReactive__regression__results <- eventReactive__regression__results__creator(input, reactive__source_data)
+
+    output$regression__date_slider__UI <- renderUI({ return (create_date_slider(dataset=reactive__source_data(), inputId='regression__date_slider')) })
+
     output$regression__summary_output <- renderPrint__regression__summary_output(eventReactive__regression__results)
     output$regression__number_of_rows_missing_removed <- renderText__regression__number_of_rows_missing_removed(eventReactive__regression__results)
     output$regression__formula <- renderText__regression__formula(eventReactive__regression__results)

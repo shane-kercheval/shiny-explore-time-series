@@ -426,7 +426,37 @@ if(length(dataset_variables) == 0) {
 na.omit(dataset)
 ```
 
+```{r}
+dataset <- a10
+ts_model <- tslm(dataset ~ trend + season)
+ts_forecast <- forecast(ts_model, h = 10)
 
+
+dataset <- visnights
+ts_model <- tslm(NSWMetro ~ trend + season + NSWNthCo, data = dataset)
+# forecast automatically gives trend/season as can be observed with the ts_forecast results i.e. row names
+
+predict_horizon <- 20
+ts_forecast <- NULL
+predictions <- c(4.886140)  # starting value e.g. lagged value
+for(horizon in 1:predict_horizon) {
+    print(horizon)
+    # last predition has all x predictions
+    ts_forecast <- forecast(ts_model, newdata = data.frame(NSWNthCo=predictions))
+    temp <- as.data.frame(ts_forecast)$`Point Forecast`
+    predictions <- c(predictions, temp[length(temp)])
+}
+ts_forecast
+#rownames(as.data.frame(ts_forecast)
+
+autoplot(dataset) +
+    autolayer(fitted(ts_model), series = 'Regression') +
+    autolayer(ts_forecast, series = 'Regression') + 
+    labs(caption='Confidence level is misleading, because we are using predictions of predictions')
+
+# two ways to make predictions.. can use predictions of predictions, or, can use lag values at least as farback as we want to forecast e.g. forecast 4 months we need to lag data by 4 months
+
+```
 
 
 

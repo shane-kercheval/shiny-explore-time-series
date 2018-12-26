@@ -68,25 +68,6 @@ reactive__var_plots__filtered_data__creator <- function(input, dataset, date_sli
 ##############################################################################################################
 # CREATE GGPLOT OBJECT
 ##############################################################################################################
-convert_start_end_window <- function(dataset, start_end_window) {
-    # this function is needed because `window()` gives a warning if the `start` parameter isn't different than
-    # the dataset's actual start value
-    s <- NULL
-    e <- NULL
-
-    # if the selected filter value is different than the actual start value, keep the value to filter on
-    if(start_end_window[1] != start(dataset)[1]) {
-
-        s <- c(start_end_window[1], 1)
-    }
-    # if the selected filter value is different than the actual end value, keep the value to filter on
-    if(start_end_window[2] != end(dataset)[1]) {
-
-        e <- c(start_end_window[2], frequency(dataset))
-    }
-
-    return (list(s, e))
-}
 
 helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiveValues_models) {
 
@@ -618,22 +599,6 @@ reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset,
 ##############################################################################################################
 # INPUT
 ##############################################################################################################
-renderUI__var_plots__date_slider__UI <- function(dataset) {
-
-    renderUI({
-        local_dataset <- dataset()
-
-        s <- start(local_dataset)[1]
-        e <- end(local_dataset)[1]
-
-        sliderTextInput(inputId='var_plots__date_slider',
-                        label='Date Window',
-                        choices=seq(s, e, 1),
-                        selected=c(s, e),
-                        grid=TRUE)
-    })
-}
-
 renderUI__var_plots__ts_variables__UI <- function(dataset) {
 
     renderUI({

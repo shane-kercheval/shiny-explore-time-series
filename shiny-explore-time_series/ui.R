@@ -304,13 +304,18 @@ shinyUI(fluidPage(theme="custom.css",
             "Regression",
             column(3,
                 class='column-input-control-style',
-                bsCollapse(id='regression__collapse_controls', open="Variables", multiple=TRUE,
+                bsCollapse(id='regression__collapse_controls', open=c("Variables", "Options"), multiple=TRUE,
                     bsCollapsePanel(
                         "Variables",
                         uiOutput('regression__dependent_variable__UI'),
                         uiOutput('regression__independent_variables__UI'),
                         actionButton(inputId='regression__toggle_all_ind_variables',
                                      label="Toggle All Variables"),
+                        style='default'
+                    ),
+                    bsCollapsePanel(
+                        "Options",
+                        uiOutput('regression__date_slider__UI'),
                         style='default'
                     ),
                     bsCollapsePanel(

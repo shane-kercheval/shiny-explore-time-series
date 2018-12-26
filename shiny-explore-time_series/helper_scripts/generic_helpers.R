@@ -64,3 +64,37 @@ capture_messages_warnings <- function(func) {
     )
     return (paste0(messages, collapse = '\n'))
 }
+
+create_date_slider <- function(dataset, inputId) {
+
+    s <- start(dataset)[1]
+    e <- end(dataset)[1]
+
+    return (
+        sliderTextInput(inputId=inputId,
+                        label="Date Window",
+                        choices=seq(s, e, 1),
+                        selected=c(s, e),
+                        grid=TRUE)
+    )
+}
+
+convert_start_end_window <- function(dataset, start_end_window) {
+    # this function is needed because `window()` gives a warning if the `start` parameter isn't different than
+    # the dataset's actual start value
+    s <- NULL
+    e <- NULL
+
+    # if the selected filter value is different than the actual start value, keep the value to filter on
+    if(start_end_window[1] != start(dataset)[1]) {
+
+        s <- c(start_end_window[1], 1)
+    }
+    # if the selected filter value is different than the actual end value, keep the value to filter on
+    if(start_end_window[2] != end(dataset)[1]) {
+
+        e <- c(start_end_window[2], frequency(dataset))
+    }
+
+    return (list(s, e))
+}
