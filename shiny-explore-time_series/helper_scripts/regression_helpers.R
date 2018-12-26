@@ -1,3 +1,69 @@
+easy_regression <- function(dataset,
+                            dependent_variable,
+                            independent_variables,
+                            interaction_variables=NULL,
+                            polynomial=NULL) {
+
+    if(is.null(interaction_variables)) {
+        
+        interaction_variables_formula <- ''
+    
+    } else {
+
+        interaction_variables_formula <- paste(map_chr(interaction_variables, ~ paste(., collapse =' * ')),
+                                                   collapse = ' + ')
+    }
+
+    if(is.null(independent_variables) || length(independent_variables) == 0) {
+
+        independent_variables_formula <- interaction_variables_formula
+
+    } else if(is.null(interaction_variables) || length(interaction_variables) == 0) {
+
+        independent_variables_formula <- paste(independent_variables, collapse =' + ')
+
+    } else {
+        
+        independent_variables_formula <- paste(interaction_variables_formula,
+                                               '+',
+                                               paste(independent_variables, collapse =' + '))
+    }
+
+    if(is_single_time_series(dataset)) {
+
+        dependent_variable <- 'dataset'
+    }
+
+    formula <- paste(dependent_variable, '~', independent_variables_formula)
+
+
+    # get indexes of rows that contain NA, and remove
+    dataset_variables <- independent_variables[! independent_variables %in% built_in_ts_variables]
+
+    if(length(dataset_variables) == 0) {
+
+        indexes_to_remove <- which(!complete.cases(dataset))
+
+    } else {
+        
+        indexes_to_remove <- which(!complete.cases(dataset[, dataset_variables]))
+    }
+
+    dataset <- na.omit(dataset)
+
+    type <- 'Linear Regression'
+    result <- tslm(formula, data=dataset)
+    reference <- NULL
+
+    return (
+        list(rows_excluded=indexes_to_remove,
+             type=type,
+             formula=formula,
+             results=result,
+             reference=reference)
+    )
+}
+
 ##########################################################################################################
 # Regression Results - Run Regression when user clicks Run button
 ##########################################################################################################    
@@ -46,7 +112,7 @@ eventReactive__regression__results__creator <- function(input, dataset) {
 ##############################################################################################################
 helper_create_ts_regression_variables <- function(dataset, variables_to_exclude=NULL){
 
-    independent_variables <- c("Trend", "Series")
+    independent_variables <- built_in_ts_variables
 
     if(is_single_time_series(dataset)) {
 
@@ -70,7 +136,7 @@ renderUI__regression__dependent_variable__UI <- function(dataset) {
     renderUI({
 
         variables <- helper_create_ts_regression_variables(dataset(),
-                                                           variables_to_exclude=c("Trend", "Series"))
+                                                           variables_to_exclude=built_in_ts_variables)
 
 
         if(is_single_time_series(dataset())) {

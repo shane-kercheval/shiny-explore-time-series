@@ -408,7 +408,23 @@ summary(lm_results)
 fitted(forecast(goog))
 ```
 
+```{r}
+independent_variables <- c('trend', 'season')
+dataset <- melsyd
 
+dataset_variables <- independent_variables[! independent_variables %in% c('trend', 'season')]
+
+if(length(dataset_variables) == 0) {
+
+    indexes_to_remove <- which(!complete.cases(dataset))
+
+} else {
+    
+    indexes_to_remove <- which(!complete.cases(dataset[, dataset_variables]))
+}
+
+na.omit(dataset)
+```
 
 
 

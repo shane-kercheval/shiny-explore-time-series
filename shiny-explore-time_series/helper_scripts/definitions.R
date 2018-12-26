@@ -4,7 +4,7 @@ select_variable <- "<Select>"
 select_variable_optional <- "<Select (optional)>"
 
 single_time_series_variable_name <- "Loaded Data"
-
+built_in_ts_variables <- c("trend", "season")
 theme_base_size <- 16
 
 
