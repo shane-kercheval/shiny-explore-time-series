@@ -427,10 +427,13 @@ na.omit(dataset)
 ```
 
 ```{r}
+# NOTE: we have to lag at least 1 value, unless we are using trend/season
+# if we forecast prediction of prediction, we only have to lag1
+# if we forecast with actual values, we have to lag as far back as we want to predict (i.e. predict 10 periods in future, lag at least 10 periods behind)
+
 dataset <- a10
 ts_model <- tslm(dataset ~ trend + season)
 ts_forecast <- forecast(ts_model, h = 10)
-
 
 dataset <- visnights
 ts_model <- tslm(NSWMetro ~ trend + season + NSWNthCo, data = dataset)
@@ -455,10 +458,51 @@ autoplot(dataset) +
     labs(caption='Confidence level is misleading, because we are using predictions of predictions')
 
 # two ways to make predictions.. can use predictions of predictions, or, can use lag values at least as farback as we want to forecast e.g. forecast 4 months we need to lag data by 4 months
-
 ```
 
+```{r}
+# lag
+lagged_data <- cbind(
+    NSWMetro=visnights[, 'NSWMetro'],
+    NSWNthCo=visnights[, 'NSWNthCo'],
+    Lag1_NSWNthCo=stats::lag(visnights[, 'NSWNthCo'], -1),
+    Lag2_NSWNthCo=stats::lag(visnights[, 'NSWNthCo'], -2),
+    Lag3_NSWNthCo=stats::lag(visnights[, 'NSWNthCo'], -3),
+    Lag4_NSWNthCo=stats::lag(visnights[, 'NSWNthCo'], -4))
 
+# na.omit will remove the NAs at the beginning of the dataset but will also remove the NAs at the end of the 
+# dataset which is needed to we restrict the training to the original time horizon i.e. ending period
+end(visnights) 
+end(lagged_data)
+
+training_data <- na.omit(lagged_data)
+end(visnights) 
+end(lagged_data)
+end(training_data)
+
+#dataset <- visnights
+ts_model <- tslm(NSWMetro ~ trend + season + Lag4_NSWNthCo, data = training_data)
+#summary(ts_model)
+# forecast automatically gives trend/season as can be observed with the ts_forecast results i.e. row names
+
+# now we can only predict 4 periods ahead because we lagged 4 periods
+predict_horizon <- 4
+num_periods <- nrow(lagged_data) ##### NOTE: need to use nrow or length depending on if it is multi vs single variable dataset
+new_data <- subset(lagged_data, start=num_periods - predict_horizon + 1)
+
+new_data2 <- as.data.frame(new_data) %>% select(Lag4_NSWNthCo)
+
+ts_forecast <- forecast(ts_model, newdata = new_data2)
+#ts_forecast <- forecast(ts_model, xreg = as.data.frame(new_data) %>% select(-'NSWMetro', -'NSWNthCo', -'Lag1_NSWNthCo'))
+ts_forecast
+#rownames(as.data.frame(ts_forecast)
+
+autoplot(lagged_data[, 'NSWMetro']) +
+    autolayer(fitted(ts_model), series = 'Regression') +
+    autolayer(ts_forecast, series = 'Regression') + 
+    labs(caption='Confidence level is misleading, because we are using predictions of predictions')
+
+```
 
 
 
