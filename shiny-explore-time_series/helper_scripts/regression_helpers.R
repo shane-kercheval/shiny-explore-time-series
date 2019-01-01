@@ -33,46 +33,47 @@ regression_build_formula <- function(dependent_variable, independent_variables=N
     return (paste(dependent_variable, '~', independent_variables_formula))
 }
 
-easy_regression <- function(dataset,
-                            dependent_variable,
-                            independent_variables,
-                            interaction_variables=NULL,
-                            polynomial=NULL) {
+# easy_regression <- function(dataset,
+#                             dependent_variable,
+#                             independent_variables,
+#                             interaction_variables=NULL,
+#                             polynomial=NULL) {
 
     
-    formula <- regression_build_formula(dependent_variable, independent_variables, interaction_variables)
+#     formula <- regression_build_formula(dependent_variable, independent_variables, interaction_variables)
 
-    # variables other than trend/season
-    dataset_variables <- independent_variables[! independent_variables %in% built_in_ts_variables]
+#     # variables other than trend/season
+#     dataset_variables <- independent_variables[! independent_variables %in% built_in_ts_variables]
 
-    # get indexes of rows that contain NA, and remove
-    if(length(dataset_variables) == 0) {
+#     # get indexes of rows that contain NA, and remove
+#     if(length(dataset_variables) == 0) {
 
-        indexes_to_remove <- which(!complete.cases(dataset))
+#         indexes_to_remove <- which(!complete.cases(dataset))
 
-    } else {
+#     } else {
         
-        indexes_to_remove <- which(!complete.cases(dataset[, dataset_variables]))
-    }
+#         indexes_to_remove <- which(!complete.cases(dataset[, dataset_variables]))
+#     }
 
-    dataset <- na.omit(dataset)
+#     dataset <- na.omit(dataset)
 
-    type <- 'Linear Regression'
-    result <- tslm(formula, data=dataset)
-    reference <- NULL
+#     type <- 'Linear Regression'
+#     result <- tslm(formula, data=dataset)
+#     reference <- NULL
 
-    return (
-        list(rows_excluded=indexes_to_remove,
-             type=type,
-             formula=formula,
-             results=result,
-             reference=reference)
-    )
-}
+#     return (
+#         list(rows_excluded=indexes_to_remove,
+#              type=type,
+#              formula=formula,
+#              results=result,
+#              reference=reference)
+#     )
+# }
 
 ##########################################################################################################
 # Regression Results - Run Regression when user clicks Run button
 ##########################################################################################################    
+
 eventReactive__regression__results__creator <- function(input, dataset) {
 
     eventReactive(input$regression__run_button, {
@@ -82,8 +83,16 @@ eventReactive__regression__results__creator <- function(input, dataset) {
             return (NULL)
         }
 
+        # log_message_block_start("Running Regression...")
+
+        # log_message_variable('input$regression__dependent_variable', input$regression__dependent_variable)
+        # log_message_variable('input$regression__independent_variables', input$regression__independent_variables)
+        # log_message_variable('input$regression__ex_ante_forecast_horizon', input$regression__ex_ante_forecast_horizon)
+        # log_message_variable('input$regression__num_lags', input$regression__num_lags)
+
         local_interaction_term1 <- input$regression__interaction_term1
         local_interaction_term2 <- input$regression__interaction_term2
+
 
         withProgress(value=1/2, message='Running Regression',{
 
@@ -95,22 +104,41 @@ eventReactive__regression__results__creator <- function(input, dataset) {
                 interaction_variables <- list(c(local_interaction_term1,
                                                 local_interaction_term2))
             }
+            # log_message_variable('interaction_variables', interaction_variables)
+
 
             local_dataset <- dataset()
             local_date_slider <- input$regression__date_slider
             local_date_slider <- convert_start_end_window(local_dataset, local_date_slider)
-            log_message_variable('input$regression__date_slider', paste0(local_date_slider, collapse='-'))
+            # log_message_variable('input$regression__date_slider', paste0(local_date_slider, collapse='-'))
             local_dataset <- window(local_dataset,
                                 start=local_date_slider[[1]],
                                 end=local_date_slider[[2]])
 
 
-            results <- easy_regression(dataset=local_dataset,
-                                       dependent_variable=input$regression__dependent_variable,
-                                       independent_variables=input$regression__independent_variables,
-                                       # list of vectors, each element in the list is a pair of interaction terms
-                                       # only supporting two interaction variables at the moment
-                                       interaction_variables=interaction_variables)
+            local_dependent_variable <- input$regression__dependent_variable
+
+            if(local_dependent_variable == single_time_series_variable_name) {
+
+                local_dependent_variable <- NULL
+            }
+
+            results <- rt_ts_auto_regression(dataset=local_dataset,
+                                             dependent_variable=local_dependent_variable,
+                                             independent_variables=input$regression__independent_variables,
+                                    
+                                             # interaction_variables NOT SUPPORTED 
+                                             # list of vectors, each element in the list is a pair of interaction terms
+                                             # only supporting two interaction variables at the moment
+                                             # interaction_variables=interaction_variables,
+
+                                             num_lags=null_if_na(input$regression__num_lags),
+                                             ex_ante_forecast_horizon=null_if_na(input$regression__ex_ante_forecast_horizon),
+                                             build_graphs=TRUE,
+                                             show_dataset_labels=FALSE,
+                                             show_forecast_labels=TRUE
+
+                                       )
 
             shinyjs::show('regression__formula_header')
             shinyjs::show('regression__summary_header__UI')
@@ -287,7 +315,16 @@ renderPrint__regression__summary_output <- function(regression__results) {
     renderPrint({
 
         req(regression__results())
-        summary(regression__results()$results)
+        summary(regression__results()$model)
+    })
+}
+
+renderPrint__regression__cross_validation <- function(regression__results) {
+
+    renderPrint({
+
+        req(regression__results())
+        CV(regression__results()$model)
     })
 }
 
@@ -314,7 +351,7 @@ renderPrint__regression__summary_vif <- function(regression__results) {
     renderPrint({
 
         req(regression__results())
-        car::vif(regression__results()$results)
+        car::vif(regression__results()$model)
     })
 }
 
@@ -338,7 +375,7 @@ render_diagnostic_plot__actual_vs_predicted <- function(input, session, dataset,
     render_diagnostic_plot(
         regression__results,
         graph_function=function() {
-            xyplot(dataset()[, isolate({input$regression__dependent_variable})] ~ predict(regression__results()$results),
+            xyplot(dataset()[, isolate({input$regression__dependent_variable})] ~ predict(regression__results()$model),
                    type=c('p', 'g'),
                    xlab='Predicted', ylab='Actual')
         },
@@ -350,7 +387,7 @@ render_diagnostic_plot__residuals_vs_fitted <- function(input, session, dataset,
 
     render_diagnostic_plot(
         regression__results,
-        graph_function=function() { plot(regression__results()$results, which=1) },
+        graph_function=function() { plot(regression__results()$model, which=1) },
         graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_fitted_width}
     )
 }
@@ -360,7 +397,7 @@ render_diagnostic_plot__actual_vs_observed <- function(input, session, dataset, 
     render_diagnostic_plot(
         regression__results,
         graph_function=function() {
-            xyplot(predict(regression__results()$results) ~ 1:nrow(dataset()),
+            xyplot(predict(regression__results()$model) ~ 1:nrow(dataset()),
                    type=c('p', 'g'),
                    xlab='Observation Number', ylab='Predicted')
         },
@@ -372,7 +409,7 @@ render_diagnostic_plot__normal_qq <- function(input, session, dataset, regressio
 
     render_diagnostic_plot(
         regression__results,
-        graph_function=function() { plot(regression__results()$results, which=2) },
+        graph_function=function() { plot(regression__results()$model, which=2) },
         graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_normal_qq_width}
     )
 }
@@ -381,7 +418,7 @@ render_diagnostic_plot__scale_location <- function(input, session, dataset, regr
 
     render_diagnostic_plot(
         regression__results,
-        graph_function=function() { plot(regression__results()$results, which=3) },
+        graph_function=function() { plot(regression__results()$model, which=3) },
         graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_scale_location_width}
     )
 }
@@ -390,7 +427,7 @@ render_diagnostic_plot__cooks_distance <- function(input, session, dataset, regr
 
     render_diagnostic_plot(
         regression__results,
-        graph_function=function() { plot(regression__results()$results, which=4) },
+        graph_function=function() { plot(regression__results()$model, which=4) },
         graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_cooks_distance_width}
     )
 }
@@ -399,7 +436,7 @@ render_diagnostic_plot__residuals_vs_leverage <- function(input, session, datase
 
     render_diagnostic_plot(
         regression__results,
-        graph_function=function() { plot(regression__results()$results, which=5) },
+        graph_function=function() { plot(regression__results()$model, which=5) },
         graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_leverage_width}
     )
 }
@@ -408,7 +445,7 @@ render_diagnostic_plot__cooks_distance_vs_leverage <- function(input, session, d
 
     render_diagnostic_plot(
         regression__results,
-        graph_function=function() { plot(regression__results()$results, which=6) },
+        graph_function=function() { plot(regression__results()$model, which=6) },
         graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_cooks_distance_vs_leverage_width}
     )
 }

@@ -144,6 +144,7 @@ shinyServer(function(input, output, session) {
     output$regression__date_slider__UI <- renderUI({ return (create_date_slider(dataset=reactive__source_data(), inputId='regression__date_slider')) })
 
     output$regression__summary_output <- renderPrint__regression__summary_output(eventReactive__regression__results)
+    output$regression__cross_validation <- renderPrint__regression__cross_validation(eventReactive__regression__results)
     output$regression__number_of_rows_missing_removed <- renderText__regression__number_of_rows_missing_removed(eventReactive__regression__results)
     output$regression__formula <- renderText__regression__formula(eventReactive__regression__results)
     output$regression__summary_vif <- renderPrint__regression__summary_vif(eventReactive__regression__results)

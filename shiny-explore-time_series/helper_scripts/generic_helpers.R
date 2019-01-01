@@ -21,6 +21,16 @@ null_if_select_variable_optional <- function(value) {
     return (value)
 }
 
+null_if_na <- function(value) {
+
+    if(is.na(value)) {
+
+        return (NULL)
+    }
+
+    return (value)
+}
+
 cv_mse <- function(cv_result) {
 
     return (colMeans(cv_result^2, na.rm = TRUE))
