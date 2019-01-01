@@ -16,7 +16,8 @@ library(knitr)
 library(stringr)
 # library(scales)
 # library(ggrepel)
-# library(rtools)
+library(rtools)
+library(fpp2)
 
 options(scipen=999) # non-scientific notation
 ```
@@ -428,163 +429,6 @@ if(length(dataset_variables) == 0) {
 na.omit(dataset)
 ```
 
-```{r}
-single_time_series_variable_name <- "Loaded Data"
-is_single_time_series <- function(x) {
-
-    classes <- class(x)
-    return (length(classes) == 1 && classes == 'ts')
-}
-is_multi_time_series <- function(x) {
-
-    classes <- class(x)
-    return (any(classes == 'mts') || any(classes == 'msts'))
-}
-
-regression_build_formula <- function(dependent_variable,
-                                     independent_variables=NULL,
-                                     interaction_variables=NULL,
-                                     ex_ante_horizon=NULL) {
-    # ex_ante_horizon specifies the number periods (i.e. horizon) we will be forecasting
-    # this ex_ante (i.e. true forecast) implementation requires the lags included in the regression model
-    # to be >= the ex_ante_horizon.... e.g. cannot have lag 5 included if we are predicting 10 periods ahead, or lag 9
-    # all independent variables are included of ex_ante_horizon is NULL
-    
-    if(!is.null(ex_ante_horizon)) {
-
-        #independent_variables <- c('trend', 'season', 'x_lag_1', 'x_lag_2', 'x_lag_3', 'x_lag_4', 'x_lag_5')
-        splits <- str_split(independent_variables, '_lag_', simplify=TRUE)
-        if(ncol(splits) == 1) { # no matches/lags found
-            
-            valid_lags <- rep(FALSE, length(independent_variables))  # all invalid
-
-        } else {
-
-            lag_number <- as.numeric(splits[, 2])
-            lag_number[is.na(lag_number)] <- 0  # NA means not a lag
-            valid_lags <- lag_number >= ex_ante_horizon
-            
-        } 
-            
-        keep_vars <- independent_variables %in% c('trend', 'season') | valid_lags
-        independent_variables <- independent_variables[keep_vars]
-    }
-
-    if(is.null(interaction_variables)) {
-        
-        interaction_variables_formula <- ''
-    
-    } else {
-
-        interaction_variables_formula <- paste(map_chr(interaction_variables, ~ paste(., collapse =' * ')),
-                                               collapse = ' + ')
-    }
-
-    if(is.null(independent_variables) || length(independent_variables) == 0) {
-
-        independent_variables_formula <- interaction_variables_formula
-
-    } else if(is.null(interaction_variables) || length(interaction_variables) == 0) {
-
-        independent_variables_formula <- paste(independent_variables, collapse =' + ')
-
-    } else {
-        
-        independent_variables_formula <- paste(interaction_variables_formula,
-                                               '+',
-                                               paste(independent_variables, collapse =' + '))
-    }
-
-    if(dependent_variable == single_time_series_variable_name) {
-
-        dependent_variable <- 'dataset'
-    }
-
-    return (paste(dependent_variable, '~', independent_variables_formula))
-}
-
-regression_build_formula(dependent_variable = 'Loaded Data',
-                         independent_variables = c('trend', 'season'))
-
-regression_build_formula(dependent_variable = 'NSWMetro',
-                         independent_variables = c('trend', 'season', 'NSWNthCo'))
-regression_build_formula(dependent_variable = 'NSWMetro',
-                         independent_variables = c('trend', 'season', 'NSWNthCo', 'NSWNthCo_lag_1', 'NSWNthCo_lag_2'),
-                         ex_ante_horizon = NULL)
-regression_build_formula(dependent_variable = 'NSWMetro',
-                         independent_variables = c('trend', 'season', 'NSWNthCo', 'NSWNthCo_lag_1', 'NSWNthCo_lag_2'),
-                         ex_ante_horizon = 1)
-regression_build_formula(dependent_variable = 'NSWMetro',
-                         independent_variables = c('trend', 'season', 'NSWNthCo', 'NSWNthCo_lag_1', 'NSWNthCo_lag_2'),
-                         ex_ante_horizon = 2)
-```
-
-```{r}
-library(fpp2)
-
-get_lagged_data <- function(dataset, num_lags=1, lag_columns=NULL, keep_columns=NULL) {
-    # lag_columns specifies all the columns we want to add lags for (and it retains the original column); NULL for single var datasets
-    # keep_columns specifies all the columns we want to keep, but do not want lags added
-    # all other columns will be removed
-    # num_lags is the number of lag variables to add for each of the lag_columns
-
-    lagged_dataset <- NULL
-    new_columns <- NULL
-
-    if(is_single_time_series(dataset)) {
-        
-        lagged_dataset <- dataset
-        new_columns <- 'original_data'
-        
-        for(lag in 1:num_lags) {
-         
-            lagged_dataset <- cbind(lagged_dataset, stats::lag(dataset, lag * -1))
-            new_columns <- c(new_columns, paste0('data_lag_', lag))
-        }
-        
-    } else {
-        if(is.null(lag_columns)) {
-            lag_columns <- colnames(dataset)
-        }
-
-        new_columns <- NULL
-        
-        if(!is.null(keep_columns)) {
-
-            for(column in keep_columns) {
-                
-                lagged_dataset <- cbind(lagged_dataset, dataset[, column])
-                new_columns <- c(new_columns, column)
-            }
-        }
-
-        for(column in lag_columns) {
-            
-            # add original column
-            lagged_dataset <- cbind(lagged_dataset, dataset[, column])
-            new_columns <- c(new_columns, column)
-            
-            # add lags
-            for(lag in 1:num_lags) {
-             
-                lagged_dataset <- cbind(lagged_dataset, stats::lag(dataset[, column], lag * -1))
-                new_columns <- c(new_columns, paste0(column, '_lag_', lag))
-            }
-            
-        }
-    }
-    
-    colnames(lagged_dataset) <- new_columns
-
-    return (lagged_dataset)
-}
-
-get_lagged_data(a10, num_lags=3)
-get_lagged_data(visnights, lag_columns = c('NSWNthCo', 'SAUMetro'), num_lags=3)
-get_lagged_data(visnights, lag_columns = c('NSWNthCo', 'SAUMetro'), keep_columns=c('NSWMetro'), num_lags=3)
-get_lagged_data(visnights, lag_columns = c('NSWNthCo', 'SAUMetro'), keep_columns=c('NSWMetro', 'QLDMetro'), num_lags=3)
-View(get_lagged_data(visnights, lag_columns = NULL, num_lags=3))
-```
 
 ```{r}
 # NOTE: we have to lag at least 1 value, **unless we are using trend/season**
@@ -614,106 +458,33 @@ stopifnot(num_lags >= predict_horizon)
 # dataset <- visnights
 # if(!is.null(num_lags)) {
 
-#     dataset <- get_lagged_data(dataset, lag_columns=c('NSWNthCo'), keep_columns=c('NSWMetro'), num_lags = num_lags)
+#     dataset <- rt_ts_create_lagged_dataset(dataset, lag_variables=c('NSWNthCo'), keep_variables=c('NSWMetro'), num_lags = num_lags)
 # }
 
 # dependent_variable = 'NSWMetro'
 # independent_variables = c('trend', 'season', colnames(dataset))
 # 
-# reg_formula <- regression_build_formula(dependent_variable = dependent_variable,
-#                                         independent_variables = independent_variables,
-#                                         ex_ante_horizon = ex_ante_horizon)
+# reg_formula <- rt_ts_lm_build_formula(dependent_variable = dependent_variable,
+#                                       independent_variables = independent_variables,
+#                                       ex_ante_horizon = ex_ante_horizon)
 
 ###################### A10 #####################
 dataset <- a10
 dependent_variable = 'Loaded Data'
 
-if(!is.null(num_lags)) {
-
-    dataset <- get_lagged_data(dataset, num_lags = num_lags)
-    dependent_variable = 'original_data'  # this is what get_lagged_data names the column
-}
-
 independent_variables = c('trend', 'season', colnames(dataset))
-reg_formula <- regression_build_formula(dependent_variable = dependent_variable,
-                                        independent_variables = independent_variables,
-                                        ex_ante_horizon = ex_ante_horizon)
 
+single_time_series_variable_name <- "Loaded Data"
+if(dependent_variable == single_time_series_variable_name) {
 
-
-# for LAGGED DATA na.omit will remove the NAs at the beginning of the dataset (because a column that lags x 
-# periods doesn't have values for the first x periods)
-# but will also remove the NAs at the end of the dataset which is needed to we restrict the training to the
-# original time horizon i.e. ending period
-training_data <- na.omit(dataset)
-
-# end(visnights)
-# end(dataset)
-# end(training_data)
-
-ts_model <- tslm(formula = reg_formula, data = training_data)
-#summary(ts_model)
-
-if(is_single_time_series(dataset)) {
-
-    ggplot_object <- autoplot(dataset)
-
-} else {
-
-    ggplot_object <- autoplot(dataset[, dependent_variable])    
+        dependent_variable <- 'dataset'
 }
 
-ggplot_object <- ggplot_object +
-    autolayer(fitted(ts_model), series = 'Regression')
 
+trend_season <- independent_variables[independent_variables %in% c('trend', 'season')]
+column_names <- c(dependent_variable, independent_variables)
+c(c(), column_names[! column_names %in% dependent_variable])
 
-# NOTE IN SHINY
-# Ex-Ante means we should remove all of the independent variables, except for the lags i.e. they are true forecasts
-# we can run regression if not EX-ANTE but we cannot forecast, because we don't have the future non-lag values available to us
-#prediction_type <- 'predict from lag x'  # think of better name; point is that if we want to predict 4 periods ahead, we need to lag at least 4 periods back, prediction intervals are accurate
-
-
-# we can only forecast for ex_ante regressions, otherwise we don't have the required data
-if(ex_ante_regression) {
-    
-# if we only forecast trend and/or season, we don't need a lag, just forecast however many periods
-    if(all(independent_variables %in% c('trend', 'season'))) {
-        
-        ts_forecast <- forecast(ts_model, h=predict_horizon)
-        
-    } else {
-
-        # TODO: need to ensure that the number of lags used is equal to the prediction horizon
-        
-        if(is_single_time_series(dataset)) {
-            
-            num_periods <- length(dataset)
-            new_data <- subset(dataset, start=num_periods - predict_horizon + 1)
-        
-        } else {
-            
-            independent_vars_used <- str_split(str_split(reg_formula, pattern=' ~ ', simplify=TRUE )[2], ' \\+ ')[[1]]
-            independent_vars_used <- independent_vars_used[! independent_vars_used %in% c('trend', 'season')]
-
-            # the last `predict_horizon` number of periods after this dataset will be the first
-            # `predict_horizon` number of periods after the last available period in the original dataset
-            # i.e. will be the `predict_horizon` periods we can predict
-            temp <- na.omit(dataset[, independent_vars_used])
-            num_periods <- nrow(temp)
-            # new_data should now contain a ts dataset of the periods we want to predict and the (lagged)
-            # values necessary to predict them
-            new_data <- as.data.frame(subset(temp, start=num_periods - predict_horizon + 1))
-        }
-    
-        ts_forecast <- forecast(ts_model, newdata = new_data)
-    }
-    
-    ggplot_object <- ggplot_object + 
-        autolayer(ts_forecast, series = 'Regression')
-
-}
-
-ggplot_object
 
 # two ways to make predictions.. can use predictions of predictions, or, can use lag values at least as farback as we want to forecast e.g. forecast 4 months we need to lag data by 4 months
 ```

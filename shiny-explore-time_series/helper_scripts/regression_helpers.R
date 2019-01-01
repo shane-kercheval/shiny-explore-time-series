@@ -128,7 +128,7 @@ helper_create_ts_regression_variables <- function(dataset, variables_to_exclude=
 
     independent_variables <- built_in_ts_variables
 
-    if(is_single_time_series(dataset)) {
+    if(rt_ts_is_single_variable(dataset)) {
 
         independent_variables <- c(independent_variables, single_time_series_variable_name)
 
@@ -153,7 +153,7 @@ renderUI__regression__dependent_variable__UI <- function(dataset) {
                                                            variables_to_exclude=built_in_ts_variables)
 
 
-        if(is_single_time_series(dataset())) {
+        if(rt_ts_is_single_variable(dataset())) {
 
             selected <- single_time_series_variable_name
 

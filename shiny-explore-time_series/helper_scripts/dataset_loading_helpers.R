@@ -120,11 +120,11 @@ reactive__source_data__creator <- function(input, custom_triggers) {
 ##############################################################################################################
 pretty_dataset <- function(dataset) {
 
-    if(is_single_time_series(dataset)) {
+    if(rt_ts_is_single_variable(dataset)) {
 
         return (data.frame(date=time(dataset), value=as.matrix(dataset)))
         
-    } else if (is_multi_time_series(dataset)) {
+    } else if (rt_ts_is_multi_variable(dataset)) {
         
         return (cbind(data.frame(date = time(dataset)), as.data.frame(dataset)))
         

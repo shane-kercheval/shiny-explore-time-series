@@ -34,11 +34,11 @@ reactive__var_plots__filtered_data__creator <- function(input, dataset, date_sli
                                 start=local_start_end[[1]],
                                 end=local_start_end[[2]])
 
-        if(is_single_time_series(local_dataset)) {
+        if(rt_ts_is_single_variable(local_dataset)) {
 
             log_message('**single ts**')
             
-        } else if (is_multi_time_series(local_dataset)) {
+        } else if (rt_ts_is_multi_variable(local_dataset)) {
 
             log_message('**multi ts**')
 
@@ -77,7 +77,7 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
     local_baseline_forecasts <- input$var_plots__baseline_forecasts
     local_baseline_horizon <- input$var_plots__baseline__forecast_horizon
 
-    if(is_single_time_series(dataset) &&
+    if(rt_ts_is_single_variable(dataset) &&
        !is.null(local_baseline_forecasts) &&
        !is.null(local_baseline_horizon)) {
 
@@ -226,7 +226,6 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
                 e <- end(model$mean)
                 f <- frequency(model$mean)
 
-                df_model <- as.data.frame(model)
                 ts_forecast <- ts(as.data.frame(model)$`Point Forecast`,
                                   start = s,
                                   end=e,
@@ -477,7 +476,7 @@ reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_t
 
         req(dataset())
 
-        if(is_single_time_series(dataset())) {
+        if(rt_ts_is_single_variable(dataset())) {
 
             req(input$var_plots__baseline__forecast_horizon)
         }
@@ -508,7 +507,7 @@ reactive__var_plots__auto_correlation__ggplot__creator <- function(input, datase
         local_dataset <- dataset()
         ggplot_object <- NULL
 
-        if(is_single_time_series(local_dataset)) {
+        if(rt_ts_is_single_variable(local_dataset)) {
 
             lags <- NULL
             if(!is.na(input$var_plots__auto_correlation_lags)) {
@@ -528,7 +527,7 @@ reactive__var_plots__season__ggplot__creator <- function(input, dataset, reactiv
 
         req(dataset())
 
-        if(is_single_time_series(dataset())) {
+        if(rt_ts_is_single_variable(dataset())) {
 
             req(input$var_plots__baseline__forecast_horizon)
         }
@@ -539,7 +538,7 @@ reactive__var_plots__season__ggplot__creator <- function(input, dataset, reactiv
         local_dataset <- dataset()
         ggplot_object <- NULL
 
-        if(is_single_time_series(local_dataset)) {
+        if(rt_ts_is_single_variable(local_dataset)) {
 
             log_message_variable('input$var_plots__season_plot_type', input$var_plots__season_plot_type)
 
@@ -575,7 +574,7 @@ reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset,
 
         req(dataset())
 
-        if(is_single_time_series(dataset())) {
+        if(rt_ts_is_single_variable(dataset())) {
 
             req(input$var_plots__baseline__forecast_horizon)
         }
@@ -586,7 +585,7 @@ reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset,
         local_dataset <- dataset()
         ggplot_object <- NULL
 
-        if(is_multi_time_series(local_dataset)) {
+        if(rt_ts_is_multi_variable(local_dataset)) {
 
             ggplot_object <- local_dataset %>%
                 as.data.frame() %>%
@@ -605,7 +604,7 @@ renderUI__var_plots__ts_variables__UI <- function(dataset) {
 
         local_dataset <- dataset()
 
-        if(is_multi_time_series(local_dataset)) {
+        if(rt_ts_is_multi_variable(local_dataset)) {
 
             column_names <- colnames(as.data.frame(local_dataset) %>% select_if(is.numeric))
 
@@ -783,7 +782,7 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
 
             ggplot_object <- NULL
 
-            if(is_single_time_series(local_dataset) &&
+            if(rt_ts_is_single_variable(local_dataset) &&
                !is.null(local_baseline_forecasts) && length(local_baseline_forecasts) > 0 &&
                !is.null(local_baseline_horizon)) {
 
@@ -939,7 +938,7 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
 observe__var_plots__hide_show_uncollapse_on_dataset_type <- function(session, dataset) {
     observeEvent(dataset(), {
 
-        if(is_single_time_series(dataset())) {
+        if(rt_ts_is_single_variable(dataset())) {
 
             updateCollapse(session, 'var_plots__bscollapse', close='Variables')
             shinyjs::hide('var_plots__variables_apply')
@@ -969,7 +968,7 @@ observe__var_plots__hide_show_uncollapse_on_dataset_type <- function(session, da
 observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type <- function(session, dataset) {
     observeEvent(dataset(), {
 
-        if(is_single_time_series(dataset())) {
+        if(rt_ts_is_single_variable(dataset())) {
 
             shinyjs::show('var_plots__season_plot_type')
             shinyjs::show('var_plots__auto_correlation_lags')
@@ -1004,7 +1003,7 @@ observeEvent__var_plots__variables_collapse <- function(session, dataset, reacti
         # when the source is updated, set the endanger index back to zero
         reactive_values$index <- 0
 
-        if(is_single_time_series(dataset())) {
+        if(rt_ts_is_single_variable(dataset())) {
 
             updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'default'))
 

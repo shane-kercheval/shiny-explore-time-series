@@ -37,7 +37,7 @@ renderPlot__correlation__plot <- function(input, session, dataset) {
         })
     }, height = function() {
 
-        if(is_single_time_series(dataset())) {
+        if(rt_ts_is_single_variable(dataset())) {
 
             return (1)
 
