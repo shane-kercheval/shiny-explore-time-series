@@ -385,7 +385,7 @@ render_diagnostic_plot__check_residuals_plots <- function(input, session, datase
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { checkresiduals(regression__results()$model) },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_actual_vs_fitted_width}
+        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_check_residuals_plots_width}
     )
 }
 
@@ -412,7 +412,25 @@ render_diagnostic_plot__residuals_vs_predictors <- function(input, session, data
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { regression__results()$plot_residuals_vs_predictors },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_fitted_width}
+        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_predictors_width}
+    )
+}
+
+render_diagnostic_plot__residuals_vs_period <- function(input, session, dataset, regression__results) {
+
+    render_diagnostic_plot(
+        regression__results,
+        graph_function=function() { regression__results()$plot_residuals_vs_period },
+        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_period_width}
+    )
+}
+
+render_diagnostic_plot__residuals_vs_season <- function(input, session, dataset, regression__results) {
+
+    render_diagnostic_plot(
+        regression__results,
+        graph_function=function() { regression__results()$plot_residuals_vs_season },
+        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_season_width}
     )
 }
 

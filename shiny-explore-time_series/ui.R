@@ -383,6 +383,12 @@ shinyUI(fluidPage(theme="custom.css",
                             tabPanel("Residuals vs Predictors",
                                 plotOutput(outputId='regression__diagnostic_residuals_vs_predictors')
                             ),
+                            tabPanel("Residuals vs Period",
+                                plotOutput(outputId='regression__diagnostic_residuals_vs_period')
+                            ),
+                            tabPanel("Residuals vs Season",
+                                plotOutput(outputId='regression__diagnostic_residuals_vs_season')
+                            ),
                             tabPanel("Normal Q-Q",
                                 plotOutput(outputId='regression__diagnostic_normal_qq')
                             ),

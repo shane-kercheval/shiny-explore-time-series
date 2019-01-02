@@ -152,6 +152,8 @@ shinyServer(function(input, output, session) {
 output$regression__diagnostic_fit_forecast <- render_diagnostic_plot__fit_forecast(input, session, reactive__source_data, eventReactive__regression__results)
 output$regression__diagnostic_check_residuals_plots <- render_diagnostic_plot__check_residuals_plots(input, session, reactive__source_data, eventReactive__regression__results)
 output$regression__diagnostic_residuals_vs_predictors <- render_diagnostic_plot__residuals_vs_predictors(input, session, reactive__source_data, eventReactive__regression__results)
+output$regression__diagnostic_residuals_vs_period <- render_diagnostic_plot__residuals_vs_period(input, session, reactive__source_data, eventReactive__regression__results)
+output$regression__diagnostic_residuals_vs_season <- render_diagnostic_plot__residuals_vs_season(input, session, reactive__source_data, eventReactive__regression__results)
 
 
 
