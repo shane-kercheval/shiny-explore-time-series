@@ -1,79 +1,6 @@
-# regression_build_formula <- function(dependent_variable, independent_variables=NULL, interaction_variables=NULL) {
-
-#     if(is.null(interaction_variables)) {
-        
-#         interaction_variables_formula <- ''
-    
-#     } else {
-
-#         interaction_variables_formula <- paste(map_chr(interaction_variables, ~ paste(., collapse =' * ')),
-#                                                collapse = ' + ')
-#     }
-
-#     if(is.null(independent_variables) || length(independent_variables) == 0) {
-
-#         independent_variables_formula <- interaction_variables_formula
-
-#     } else if(is.null(interaction_variables) || length(interaction_variables) == 0) {
-
-#         independent_variables_formula <- paste(independent_variables, collapse =' + ')
-
-#     } else {
-        
-#         independent_variables_formula <- paste(interaction_variables_formula,
-#                                                '+',
-#                                                paste(independent_variables, collapse =' + '))
-#     }
-
-#     if(dependent_variable == single_time_series_variable_name) {
-
-#         dependent_variable <- 'dataset'
-#     }
-
-#     return (paste(dependent_variable, '~', independent_variables_formula))
-# }
-
-# easy_regression <- function(dataset,
-#                             dependent_variable,
-#                             independent_variables,
-#                             interaction_variables=NULL,
-#                             polynomial=NULL) {
-
-    
-#     formula <- regression_build_formula(dependent_variable, independent_variables, interaction_variables)
-
-#     # variables other than trend/season
-#     dataset_variables <- independent_variables[! independent_variables %in% built_in_ts_variables]
-
-#     # get indexes of rows that contain NA, and remove
-#     if(length(dataset_variables) == 0) {
-
-#         indexes_to_remove <- which(!complete.cases(dataset))
-
-#     } else {
-        
-#         indexes_to_remove <- which(!complete.cases(dataset[, dataset_variables]))
-#     }
-
-#     dataset <- na.omit(dataset)
-
-#     type <- 'Linear Regression'
-#     result <- tslm(formula, data=dataset)
-#     reference <- NULL
-
-#     return (
-#         list(rows_excluded=indexes_to_remove,
-#              type=type,
-#              formula=formula,
-#              results=result,
-#              reference=reference)
-#     )
-# }
-
 ##########################################################################################################
 # Regression Results - Run Regression when user clicks Run button
 ##########################################################################################################    
-
 eventReactive__regression__results__creator <- function(input, dataset) {
 
     eventReactive(input$regression__run_button, {
@@ -122,6 +49,16 @@ eventReactive__regression__results__creator <- function(input, dataset) {
                 local_dependent_variable <- NULL
             }
 
+            local_lambda <- input$regression__tslm_lambda
+            if(local_lambda == 'None') {
+
+                local_lambda <- NULL
+
+            } else if(local_lambda == 'Auto') {
+
+                local_lambda <- 'auto'
+            }
+
             results <- rt_ts_auto_regression(dataset=local_dataset,
                                              dependent_variable=local_dependent_variable,
                                              independent_variables=input$regression__independent_variables,
@@ -130,7 +67,7 @@ eventReactive__regression__results__creator <- function(input, dataset) {
                                              # list of vectors, each element in the list is a pair of interaction terms
                                              # only supporting two interaction variables at the moment
                                              # interaction_variables=interaction_variables,
-
+                                             lambda=local_lambda,
                                              num_lags=null_if_na(input$regression__num_lags),
                                              include_dependent_variable_lag=input$regression__include_dependent_lags,
                                              ex_ante_forecast_horizon=null_if_na(input$regression__ex_ante_forecast_horizon),
@@ -414,6 +351,14 @@ render_diagnostic_plot__residuals_vs_predictors <- function(input, session, data
         graph_function=function() { regression__results()$plot_residuals_vs_predictors },
         graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_predictors_width}
     )
+}
+
+renderPrint_diagnostic_plot__breush_godfrey_test <- function(regression__results) {
+
+    renderPrint({
+
+        checkresiduals(regression__results()$model, plot=FALSE)
+    })
 }
 
 render_diagnostic_plot__residuals_vs_period <- function(input, session, dataset, regression__results) {

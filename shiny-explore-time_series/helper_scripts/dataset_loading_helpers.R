@@ -31,6 +31,10 @@ reactive__source_data__creator <- function(input, custom_triggers) {
 
                     loaded_dataset <- melsyd
 
+                } else if (local_preloaded_dataset == "Total annual air passengers (millions) including domestic and international passengers of air carriers registered in Australia. 1970-2016.") {
+
+                    loaded_dataset <- ausair
+
                 } else if (local_preloaded_dataset == "Half-hourly/Daily Electricity Demand for Victoria, Australia, in 2014") {
 
                     loaded_dataset <- elecdemand
