@@ -7,9 +7,9 @@ renderPlot__correlation__plot <- function(input, session, dataset) {
 
         withProgress(value=1/2, message='Calculating Correlations', {
 
-            local_dataset <- dataset()
+            local_dataset <- as.data.frame(dataset()) %>% select_if(is.numeric)
 
-            if(ncol(as.data.frame(local_dataset) %>% select_if(is.numeric)) <= 1) {
+            if(ncol(local_dataset) <= 1) {
 
                 return (print('Not enough numeric columns.'))
             }
@@ -25,6 +25,15 @@ renderPlot__correlation__plot <- function(input, session, dataset) {
             log_message_variable('correlation__p_value_threshold', input$correlation__p_value_threshold)
             log_message_variable('correlation__base_size', input$correlation__base_size)
             log_message_variable('correlation__pretty_text', input$correlation__pretty_text)
+            log_message_variable('correlation__num_lags', input$correlation__num_lags)
+
+            if(!is.na(input$correlation__num_lags) && 
+                input$correlation__num_lags > 0) {
+
+
+                local_dataset <- rt_ts_create_lagged_dataset(local_dataset,
+                                                             num_lags=input$correlation__num_lags)
+            }
 
             # see note about why I use print, in `variable plot` section below.
             return (

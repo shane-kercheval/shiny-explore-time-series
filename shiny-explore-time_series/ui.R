@@ -81,6 +81,12 @@ shinyUI(fluidPage(theme="custom.css",
                 class='column-input-control-style',
                 tags$div(
                     class='input-control-style',
+                    numericInput(inputId='correlation__num_lags',
+                                 label="Number of Lags",
+                                 value=NULL),
+                    bsTooltip(id='correlation__num_lags',
+                                  title="For each variable, adds x number of corresponding lagged variables.",
+                                  placement='bottom', trigger='hover'),
                     sliderInput(inputId='correlation__corr_threshold',
                                     label="Min Correlation Threshold", ## percent increase
                                     min=0,
