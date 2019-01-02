@@ -1,37 +1,37 @@
-regression_build_formula <- function(dependent_variable, independent_variables=NULL, interaction_variables=NULL) {
+# regression_build_formula <- function(dependent_variable, independent_variables=NULL, interaction_variables=NULL) {
 
-    if(is.null(interaction_variables)) {
+#     if(is.null(interaction_variables)) {
         
-        interaction_variables_formula <- ''
+#         interaction_variables_formula <- ''
     
-    } else {
+#     } else {
 
-        interaction_variables_formula <- paste(map_chr(interaction_variables, ~ paste(., collapse =' * ')),
-                                               collapse = ' + ')
-    }
+#         interaction_variables_formula <- paste(map_chr(interaction_variables, ~ paste(., collapse =' * ')),
+#                                                collapse = ' + ')
+#     }
 
-    if(is.null(independent_variables) || length(independent_variables) == 0) {
+#     if(is.null(independent_variables) || length(independent_variables) == 0) {
 
-        independent_variables_formula <- interaction_variables_formula
+#         independent_variables_formula <- interaction_variables_formula
 
-    } else if(is.null(interaction_variables) || length(interaction_variables) == 0) {
+#     } else if(is.null(interaction_variables) || length(interaction_variables) == 0) {
 
-        independent_variables_formula <- paste(independent_variables, collapse =' + ')
+#         independent_variables_formula <- paste(independent_variables, collapse =' + ')
 
-    } else {
+#     } else {
         
-        independent_variables_formula <- paste(interaction_variables_formula,
-                                               '+',
-                                               paste(independent_variables, collapse =' + '))
-    }
+#         independent_variables_formula <- paste(interaction_variables_formula,
+#                                                '+',
+#                                                paste(independent_variables, collapse =' + '))
+#     }
 
-    if(dependent_variable == single_time_series_variable_name) {
+#     if(dependent_variable == single_time_series_variable_name) {
 
-        dependent_variable <- 'dataset'
-    }
+#         dependent_variable <- 'dataset'
+#     }
 
-    return (paste(dependent_variable, '~', independent_variables_formula))
-}
+#     return (paste(dependent_variable, '~', independent_variables_formula))
+# }
 
 # easy_regression <- function(dataset,
 #                             dependent_variable,
@@ -106,7 +106,6 @@ eventReactive__regression__results__creator <- function(input, dataset) {
             }
             # log_message_variable('interaction_variables', interaction_variables)
 
-
             local_dataset <- dataset()
             local_date_slider <- input$regression__date_slider
             local_date_slider <- convert_start_end_window(local_dataset, local_date_slider)
@@ -133,6 +132,7 @@ eventReactive__regression__results__creator <- function(input, dataset) {
                                              # interaction_variables=interaction_variables,
 
                                              num_lags=null_if_na(input$regression__num_lags),
+                                             include_dependent_variable_lag=input$regression__include_dependent_lags,
                                              ex_ante_forecast_horizon=null_if_na(input$regression__ex_ante_forecast_horizon),
                                              build_graphs=TRUE,
                                              show_dataset_labels=FALSE,
@@ -370,16 +370,31 @@ render_diagnostic_plot <- function(regression__results, graph_function, graph_wi
     )
 }
 
-render_diagnostic_plot__actual_vs_predicted <- function(input, session, dataset, regression__results) {
+
+render_diagnostic_plot__fit_forecast <- function(input, session, dataset, regression__results) {
 
     render_diagnostic_plot(
         regression__results,
-        graph_function=function() {
-            xyplot(dataset()[, isolate({input$regression__dependent_variable})] ~ predict(regression__results()$model),
-                   type=c('p', 'g'),
-                   xlab='Predicted', ylab='Actual')
-        },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_actual_vs_predicted_width}
+        graph_function=function() { regression__results()$plot_fit},
+        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_fit_forecast_width}
+    )
+}
+
+render_diagnostic_plot__check_residuals_plots <- function(input, session, dataset, regression__results) {
+
+    render_diagnostic_plot(
+        regression__results,
+        graph_function=function() { checkresiduals(regression__results()$model) },
+        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_actual_vs_fitted_width}
+    )
+}
+
+render_diagnostic_plot__actual_vs_fitted <- function(input, session, dataset, regression__results) {
+
+    render_diagnostic_plot(
+        regression__results,
+        graph_function=function() { regression__results()$plot_actual_vs_fitted},
+        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_actual_vs_fitted_width}
     )
 }
 
@@ -387,7 +402,16 @@ render_diagnostic_plot__residuals_vs_fitted <- function(input, session, dataset,
 
     render_diagnostic_plot(
         regression__results,
-        graph_function=function() { plot(regression__results()$model, which=1) },
+        graph_function=function() { regression__results()$plot_residuals_vs_fitted },
+        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_fitted_width}
+    )
+}
+
+render_diagnostic_plot__residuals_vs_predictors <- function(input, session, dataset, regression__results) {
+
+    render_diagnostic_plot(
+        regression__results,
+        graph_function=function() { regression__results()$plot_residuals_vs_predictors },
         graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_fitted_width}
     )
 }

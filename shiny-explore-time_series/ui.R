@@ -322,6 +322,13 @@ shinyUI(fluidPage(theme="custom.css",
                         bsTooltip(id='regression__num_lags',
                                   title="The number of lagged values (for each independent variable) to include in the model.",
                                   placement='bottom', trigger='hover'),
+                        tags$div(class='bold_checkbox_input',
+                                 checkboxInput(inputId='regression__include_dependent_lags',
+                                               label="Include Dependent Lag Variables", value=TRUE)
+                        ),
+                        bsTooltip(id='regression__include_dependent_lags',
+                                  title="For multi-variable datasets, when including lagged variables, indicates whether or not to include lags for the dependent variable.",
+                                  placement='bottom', trigger='hover'),
                         numericInput(inputId='regression__ex_ante_forecast_horizon',
                                      label="Forecast (Ex Ante) Horizon",
                                      value=NULL),
@@ -361,14 +368,20 @@ shinyUI(fluidPage(theme="custom.css",
                     tabPanel("Diagnostic Plots",
                         tags$br(),
                         tabsetPanel(type="tabs",
-                            tabPanel("Actual vs Predicted",
-                                plotOutput(outputId='regression__diagnostic_actual_vs_predicted')
+                            tabPanel("Fit & Forecast",
+                                plotOutput(outputId='regression__diagnostic_fit_forecast')
                             ),
-                            tabPanel("Residuals vs Fittted",
+                            tabPanel("Check Residuals",
+                                plotOutput(outputId='regression__diagnostic_check_residuals_plots')
+                            ),
+                            tabPanel("Actual vs Fitted",
+                                plotOutput(outputId='regression__diagnostic_actual_vs_fitted')
+                            ),
+                            tabPanel("Residuals vs Fitted",
                                 plotOutput(outputId='regression__diagnostic_residuals_vs_fitted')
                             ),
-                            tabPanel("Actual vs Observed",
-                                plotOutput(outputId='regression__diagnostic_actual_vs_observed')
+                            tabPanel("Residuals vs Predictors",
+                                plotOutput(outputId='regression__diagnostic_residuals_vs_predictors')
                             ),
                             tabPanel("Normal Q-Q",
                                 plotOutput(outputId='regression__diagnostic_normal_qq')

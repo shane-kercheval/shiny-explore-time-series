@@ -148,9 +148,14 @@ shinyServer(function(input, output, session) {
     output$regression__number_of_rows_missing_removed <- renderText__regression__number_of_rows_missing_removed(eventReactive__regression__results)
     output$regression__formula <- renderText__regression__formula(eventReactive__regression__results)
     output$regression__summary_vif <- renderPrint__regression__summary_vif(eventReactive__regression__results)
-    output$regression__diagnostic_actual_vs_predicted <- render_diagnostic_plot__actual_vs_predicted(input, session, reactive__source_data, eventReactive__regression__results)
+    output$regression__diagnostic_actual_vs_fitted <- render_diagnostic_plot__actual_vs_fitted(input, session, reactive__source_data, eventReactive__regression__results)
+output$regression__diagnostic_fit_forecast <- render_diagnostic_plot__fit_forecast(input, session, reactive__source_data, eventReactive__regression__results)
+output$regression__diagnostic_check_residuals_plots <- render_diagnostic_plot__check_residuals_plots(input, session, reactive__source_data, eventReactive__regression__results)
+output$regression__diagnostic_residuals_vs_predictors <- render_diagnostic_plot__residuals_vs_predictors(input, session, reactive__source_data, eventReactive__regression__results)
+
+
+
     output$regression__diagnostic_residuals_vs_fitted <- render_diagnostic_plot__residuals_vs_fitted(input, session, reactive__source_data, eventReactive__regression__results)
-    output$regression__diagnostic_actual_vs_observed <- render_diagnostic_plot__actual_vs_observed(input, session, reactive__source_data, eventReactive__regression__results)
     output$regression__diagnostic_normal_qq <- render_diagnostic_plot__normal_qq(input, session, reactive__source_data, eventReactive__regression__results)
     output$regression__diagnostic_scale_location <- render_diagnostic_plot__scale_location(input, session, reactive__source_data, eventReactive__regression__results)
     output$regression__diagnostic_cooks_distance <- render_diagnostic_plot__cooks_distance(input, session, reactive__source_data, eventReactive__regression__results)
