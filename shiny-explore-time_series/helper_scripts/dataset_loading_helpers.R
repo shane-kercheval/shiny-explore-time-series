@@ -98,13 +98,12 @@ reactive__source_data__creator <- function(input, custom_triggers) {
 
             } else {
 
-                if(str_sub(upload_file_path, -4) == '.csv') {
-                    
-                    loaded_dataset <- read.csv(upload_file_path, header=TRUE)
-
                 } else if(str_sub(upload_file_path, -4) == '.RDS') {
                 
                     loaded_dataset <- readRDS(file=upload_file_path)
+
+                    classes <- class(x)
+                    stopifnot(any(classes == 'ts') || any(classes == 'mts') || any(classes == 'msts'))
 
                 } else {
 
