@@ -13,6 +13,8 @@ library(scales)
 library(lattice)
 library(lubridate)
 library(forecast)
+library(seasonal)
+
 
 source('helper_scripts/definitions.R')
 source('helper_scripts/logging_functions.R')
@@ -116,7 +118,9 @@ shinyServer(function(input, output, session) {
     output$var_plots__residuals_plot <- renderPlot__var_plots__residuals_plot(session, reactiveValues__vp__models)
     output$var_plots__residuals_ljung_box <- renderPrint__var_plots__residuals_ljung_box(reactiveValues__vp__models)
 
-    output$var_plots__cross_validation <- renderPlot__var_plots__var_plots__cross_validation(session, input, reactive__var_plots__filtered_data)
+    output$var_plots__cross_validation <- renderPlot__var_plots__cross_validation(session, input, reactive__var_plots__filtered_data)
+    output$var_plots__decomposition <- renderPlot__var_plots__decomposition(session, input, reactive__var_plots__filtered_data)
+    output$var_plots__decomposition_trend_season <- renderPlot__var_plots__decomposition_trend_season(session, input, reactive__var_plots__filtered_data)
 
     # observe update UI (i.e. seperate out UI changes from creating the plot in `helper_create_time_series_graph()`)
     observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type(session, reactive__var_plots__filtered_data)

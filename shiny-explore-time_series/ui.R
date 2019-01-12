@@ -120,7 +120,7 @@ shinyUI(fluidPage(theme="custom.css",
             "Plots",
             column(3,
                 class='column-input-control-style',
-                bsCollapse(id='var_plots__bscollapse', open=c("Options", "Transformations"), multiple=TRUE,
+                bsCollapse(id='var_plots__bscollapse', open=c("Options", "Transformations", "Decomposition"), multiple=TRUE,
                     bsCollapsePanel(
                         "Options",
                         uiOutput('var_plots__date_slider__UI'),
@@ -225,6 +225,27 @@ shinyUI(fluidPage(theme="custom.css",
                         style='default'
                     ),
                     bsCollapsePanel(
+                        "Decomposition",
+
+                        selectInput(inputId='var_plots__decomposition_type',
+                                    label="Decomp Type:",
+                                    choices=c("X11",
+                                              "SEATS",
+                                              "STL"),
+                                    selected="STL"),
+                        tags$div(class='bold_checkbox_input',
+                                 checkboxInput(inputId='var_plots__decomposition__show_trend',
+                                               label="Show Trend",
+                                               value=TRUE)
+                        ),
+                        tags$div(class='bold_checkbox_input',
+                                 checkboxInput(inputId='var_plots__decomposition__show_season',
+                                               label="Show Seasonally Adjusted",
+                                               value=TRUE)
+                        ),
+                        style='default'
+                    ),
+                    bsCollapsePanel(
                         "Variables",
                         fluidRow(
                             column(4,
@@ -303,6 +324,10 @@ shinyUI(fluidPage(theme="custom.css",
                         plotOutput(outputId='var_plots__scatter_matrix'),
                         tags$p("For multi-variable time-series data, this graph shows a scatterplot and correlation coefficients for each pair of variables."),
                         tags$p("Correlation is a measure of strength of the *linear* relationship between two variables, and can sometimes be misleading for non-linear relationships. The correlation coefficients lie between -1 and 1.")
+                    ),
+                    tabPanel("Decomposition",
+                        plotOutput(outputId='var_plots__decomposition'),
+                        plotOutput(outputId='var_plots__decomposition_trend_season')
                     )
                 )
             )

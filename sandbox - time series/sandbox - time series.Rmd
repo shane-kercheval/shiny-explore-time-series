@@ -535,5 +535,12 @@ autoplot(lagged_data[, 'NSWMetro']) +
 
 
 
+```{r}
+library(seasonal)
+
+a10 %>% seas(x11="") %>% autoplot() + ggtitle("X11 Decomposition")
+
+```
+
 
 

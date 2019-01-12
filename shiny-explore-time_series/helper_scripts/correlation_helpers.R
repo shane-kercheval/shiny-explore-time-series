@@ -30,7 +30,6 @@ renderPlot__correlation__plot <- function(input, session, dataset) {
             if(!is.na(input$correlation__num_lags) && 
                 input$correlation__num_lags > 0) {
 
-
                 local_dataset <- rt_ts_create_lagged_dataset(local_dataset,
                                                              num_lags=input$correlation__num_lags)
             }

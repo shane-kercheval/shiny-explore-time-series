@@ -98,7 +98,7 @@ reactive__source_data__creator <- function(input, custom_triggers) {
 
             } else {
 
-                } else if(str_sub(upload_file_path, -4) == '.RDS') {
+                if(str_sub(upload_file_path, -4) == '.RDS') {
                 
                     loaded_dataset <- readRDS(file=upload_file_path)
 
@@ -109,7 +109,7 @@ reactive__source_data__creator <- function(input, custom_triggers) {
 
                     showModal(
                         modalDialog(title = "Unknown File Type",
-                                    "Only `.csv` and `.RDS` files are supported at this time."))
+                                    "Only `.RDS` files are supported at this time."))
                 }
             }
         })

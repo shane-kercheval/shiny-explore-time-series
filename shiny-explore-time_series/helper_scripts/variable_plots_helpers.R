@@ -765,7 +765,7 @@ renderPrint__var_plots__residuals_ljung_box <- function(reactiveValues_models) {
     })
 }
 
-renderPlot__var_plots__var_plots__cross_validation <- function(session, input, dataset) {
+renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
 
     renderPlot({
             
@@ -924,8 +924,115 @@ renderPlot__var_plots__var_plots__cross_validation <- function(session, input, d
             }
 
             return (ggplot_object)
+        })
+    }, height = function() {
+
+        session$clientData$output_var_plots_width * 0.66  # set height to % of width
+    })
+}
+
+renderPlot__var_plots__decomposition <- function(session, input, dataset) {
+
+    renderPlot({
+            
+        req(dataset())
+        req(input$var_plots__decomposition_type)
+
+        decom_object <- NULL
+
+        withProgress(value=1/2, message="Creating Decomposition Graph",{
+
+            log_message_block_start("Creating `decomposition` graph...")
+            log_message_variable("input$var_plots__decomposition_type", input$var_plots__decomposition_type)
+
+
+            if(input$var_plots__decomposition_type == 'X11') {
+
+                decom_object <- dataset() %>%
+                                seas(x11="") %>%
+                                autoplot() +
+                                    ggtitle("X11 Decomposition")
+
+            } else if(input$var_plots__decomposition_type == 'SEATS') {
+
+                decom_object <- dataset() %>%
+                                seas() %>%
+                                autoplot() +
+                                    ggtitle("SEATS Decomposition")
+
+            } else if(input$var_plots__decomposition_type == 'STL') {
+
+                decom_object <- dataset() %>%
+                                mstl() %>%
+                                autoplot() +
+                                    ggtitle("STL Decomposition")
+
+            }
+        })
+
+        return (decom_object)
+    }, height = function() {
+
+        session$clientData$output_var_plots_width * 0.80  # set height to % of width
+    })
+}
+
+renderPlot__var_plots__decomposition_trend_season <- function(session, input, dataset) {
+
+    renderPlot({
+        log_message_block_start("Creating `decomposition` data graph...")
+            
+        req(dataset())
+        req(input$var_plots__decomposition_type)
+        # req(input$var_plots__decomposition__show_trend)
+        # req(input$var_plots__decomposition__show_season)
+
+        decom_object <- NULL
+
+        withProgress(value=1/2, message="Creating Decomposition Data Graph",{
+
+            log_message_variable("input$var_plots__decomposition_type", input$var_plots__decomposition_type)
+            log_message_variable("input$var_plots__decomposition__show_trend", input$var_plots__decomposition__show_trend)
+            log_message_variable("input$var_plots__decomposition__show_season", input$var_plots__decomposition__show_season)
+
+            if(input$var_plots__decomposition_type == 'X11') {
+
+                decom_fit <- dataset() %>% seas(x11="")
+
+            } else if(input$var_plots__decomposition_type == 'SEATS') {
+
+                decom_fit <- dataset() %>% seas()
+
+            } else if(input$var_plots__decomposition_type == 'STL') {
+
+                decom_fit <- dataset() %>% mstl()
+            }
+
+            decom_object <- dataset() %>% autoplot(series="Data")
+            scale_colour_manual_values <- c('gray')
+            scale_colour_manual_breaks <- c("Data")
+
+            if(input$var_plots__decomposition__show_season) {
+
+                decom_object <- decom_object + autolayer(seasadj(decom_fit), series="Seasonally Adjusted")
+                scale_colour_manual_values <- c(scale_colour_manual_values, 'blue')
+                scale_colour_manual_breaks <- c(scale_colour_manual_breaks, "Seasonally Adjusted")
+            }
+
+            if(input$var_plots__decomposition__show_trend) {
+
+                decom_object <- decom_object + autolayer(trendcycle(decom_fit), series="Trend")
+                scale_colour_manual_values <- c(scale_colour_manual_values, 'red')
+                scale_colour_manual_breaks <- c(scale_colour_manual_breaks, "Trend")
+            }
 
         })
+
+        decom_object <- decom_object + scale_colour_manual(values=scale_colour_manual_values,
+                                                           breaks=scale_colour_manual_breaks)
+
+        return (decom_object)
+
     }, height = function() {
 
         session$clientData$output_var_plots_width * 0.66  # set height to % of width
