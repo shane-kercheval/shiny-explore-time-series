@@ -94,7 +94,12 @@ reactive__source_data__creator <- function(input, custom_triggers) {
                 } else if (local_preloaded_dataset == "Winning times (in minutes) for the Boston Marathon Men's Open Division. 1897-2016.") {
 
                     loaded_dataset <- marathon
+
+                } else if (local_preloaded_dataset == "Electrical equipment manufactured in the Euro area.") {
+
+                    loaded_dataset <- elecequip
                 }
+
 
             } else {
 
