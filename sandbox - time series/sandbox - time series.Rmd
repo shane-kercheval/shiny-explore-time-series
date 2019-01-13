@@ -540,6 +540,11 @@ library(seasonal)
 
 a10 %>% seas(x11="") %>% autoplot() + ggtitle("X11 Decomposition")
 
+
+
+summary(window(austourists, start=2005) %>% ets(damped=TRUE))
+
+?ets
 ```
 
 

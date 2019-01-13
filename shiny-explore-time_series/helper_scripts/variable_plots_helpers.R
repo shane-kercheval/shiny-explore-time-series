@@ -208,6 +208,23 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
                           PI=show_PI)
         }
 
+        if("STL + ETS" %in% local_baseline_forecasts) {
+
+            forecast_model <- stlf(dataset,
+                                   h=local_baseline_horizon,
+                                   lambda=local_lambda,
+                                   biasadj=local_biasadj)
+            comment(forecast_model) <- "STL + ETS"
+
+            log_message_variable('forecast model method', forecast_model$method)
+            local_models <- c(local_models, list(forecast_model))
+
+            ggplot_object <- ggplot_object +
+                autolayer(forecast_model,
+                          series="STL + ETS",
+                          PI=show_PI)
+        }
+
         reactiveValues_models$models <- local_models
 
         if(input$var_plots__baseline__show_fitted_line) {
@@ -886,6 +903,16 @@ renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
                     methods <- c(methods, 'Auto')
                     results <- rbind(results, cross_valid_function(tsCV(local_dataset,
                                                                         forecastfunction=forecast,
+                                                                        lambda=local_lambda,
+                                                                        biasadj=local_biasadj,
+                                                                        h=local_baseline_horizon)))
+                }
+
+                if("STL + ETS" %in% local_baseline_forecasts) {
+
+                    methods <- c(methods, "STL + ETS")
+                    results <- rbind(results, cross_valid_function(tsCV(local_dataset,
+                                                                        forecastfunction=stlf,
                                                                         lambda=local_lambda,
                                                                         biasadj=local_biasadj,
                                                                         h=local_baseline_horizon)))
