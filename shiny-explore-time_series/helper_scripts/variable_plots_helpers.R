@@ -218,7 +218,9 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             forecast_model <- ets(dataset,
                                   lambda=local_lambda,
                                   damped=local_damped,
-                                  biasadj=local_biasadj) %>% forecast(h=local_baseline_horizon)
+                                  biasadj=local_biasadj) %>%
+                 forecast(h=local_baseline_horizon)
+
             comment(forecast_model) <- "ETS"
 
             log_message_variable('forecast model method', forecast_model$method)
@@ -245,6 +247,48 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series="STL + ETS",
+                          PI=show_PI)
+        }
+
+        if("Auto ARIMA (approx.)" %in% local_baseline_forecasts) {
+
+            forecast_model <- auto.arima(dataset,
+                                   lambda=local_lambda,
+                                   #damped=local_damped,
+                                   biasadj=local_biasadj,
+                                   stepwise=TRUE,
+                                   approximation=TRUE) %>% 
+                forecast(h=local_baseline_horizon)
+
+            comment(forecast_model) <- "Auto ARIMA (approx.)"
+
+            log_message_variable('forecast model method', forecast_model$method)
+            local_models <- c(local_models, list(forecast_model))
+
+            ggplot_object <- ggplot_object +
+                autolayer(forecast_model,
+                          series="Auto ARIMA (approx.)",
+                          PI=show_PI)
+        }
+
+        if("Auto ARIMA (all)" %in% local_baseline_forecasts) {
+
+            forecast_model <- auto.arima(dataset,
+                                   lambda=local_lambda,
+                                   #damped=local_damped,
+                                   biasadj=local_biasadj,
+                                   stepwise=FALSE,
+                                   approximation=FALSE) %>% 
+                forecast(h=local_baseline_horizon)
+
+            comment(forecast_model) <- "Auto ARIMA (all)"
+
+            log_message_variable('forecast model method', forecast_model$method)
+            local_models <- c(local_models, list(forecast_model))
+
+            ggplot_object <- ggplot_object +
+                autolayer(forecast_model,
+                          series="Auto ARIMA (all)",
                           PI=show_PI)
         }
 
@@ -286,7 +330,7 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             }
         }
 
-        if(!is.null(local_lambda) || local_biasadj) {
+        if(!is.null(local_lambda) || local_biasadj || local_damped) {
 
             caption <- ''
             if(!is.null(local_lambda)) {
@@ -296,6 +340,10 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             if(local_biasadj) {
 
                 caption <- paste0(c(caption, 'NOTE: using Bias Adjustment'), collapse='\n')
+            }
+            if(local_damped) {
+
+                caption <- paste0(c(caption, 'NOTE: using Damped Trend'), collapse='\n')
             }
 
             ggplot_object <- ggplot_object + labs(caption=caption)
@@ -935,17 +983,25 @@ renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
                                                                         h=local_baseline_horizon)))
                 }
 
+                if("ETS" %in% local_baseline_forecasts) {
 
-                # tsCV doesn't seem to work with ets.
-                # if("ETS" %in% local_baseline_forecasts) {
+                    forecast.ets <- function(x, h) {
 
-                #     methods <- c(methods, "ETS")
-                #     results <- rbind(results, cross_valid_function(tsCV(local_dataset,
-                #                                                         forecastfunction=ets,
-                #                                                         lambda=local_lambda,
-                #                                                         biasadj=local_biasadj,
-                #                                                         h=local_baseline_horizon)))
-                # }
+                        forecast(ets(dataset,
+                                     lambda=local_lambda,
+                                     damped=local_damped,
+                                     biasadj=local_biasadj),
+                                h=h)
+                    }
+
+
+                    methods <- c(methods, "ETS")
+                    results <- rbind(results, cross_valid_function(tsCV(local_dataset,
+                                                                        forecastfunction=forecast.ets,
+                                                                        # lambda=local_lambda,
+                                                                        # biasadj=local_biasadj,
+                                                                        h=local_baseline_horizon)))
+                }
 
                 if("STL + ETS" %in% local_baseline_forecasts) {
 
@@ -955,6 +1011,51 @@ renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
                                                                         lambda=local_lambda,
                                                                         damped=local_damped,
                                                                         biasadj=local_biasadj,
+                                                                        h=local_baseline_horizon)))
+                }
+
+                if("Auto ARIMA (approx.)" %in% local_baseline_forecasts) {
+
+                    forecast.arima <- function(x, h) {
+
+                        auto.arima(x,
+                                   lambda=local_lambda,
+                                   #damped=local_damped,
+                                   biasadj=local_biasadj,
+                                   stepwise=TRUE,
+                                   approximation=TRUE) %>% 
+                            forecast(h=h)
+                    }
+
+                    methods <- c(methods, "Auto ARIMA (approx.)")
+                    results <- rbind(results, cross_valid_function(tsCV(local_dataset,
+                                                                        forecastfunction=forecast.arima,
+                                                                        # lambda=local_lambda,
+                                                                        # damped=local_damped,
+                                                                        # biasadj=local_biasadj,
+                                                                        h=local_baseline_horizon)))
+                }
+
+                if("Auto ARIMA (all)" %in% local_baseline_forecasts) {
+
+                    forecast.arima <- function(x, h) {
+
+                        auto.arima(x,
+                                   lambda=local_lambda,
+                                   #damped=local_damped,
+                                   biasadj=local_biasadj,
+                                   stepwise=FALSE,
+                                   approximation=FALSE) %>% 
+                            forecast(h=h)
+                    }
+
+
+                    methods <- c(methods, "Auto ARIMA (all)")
+                    results <- rbind(results, cross_valid_function(tsCV(local_dataset,
+                                                                        forecastfunction=forecast.arima,
+                                                                        # lambda=local_lambda,
+                                                                        # damped=local_damped,
+                                                                        # biasadj=local_biasadj,
                                                                         h=local_baseline_horizon)))
                 }
 
