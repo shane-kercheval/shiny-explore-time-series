@@ -102,6 +102,10 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
         local_biasadj <- input$var_plots__baseline__biasadj
         log_message_variable('input$var_plots__baseline__biasadj', local_biasadj)
 
+        local_damped <- input$var_plots__baseline__damped
+        log_message_variable('input$var_plots__baseline__damped', local_damped)
+
+
         local_models <- NULL
         show_PI <- length(local_baseline_forecasts) == 1  # if multiple forecasts, don't show PI
 
@@ -196,6 +200,7 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             forecast_model <- forecast(dataset,
                                        h=local_baseline_horizon,
                                        lambda=local_lambda,
+                                       damped=local_damped,
                                        biasadj=local_biasadj)
             comment(forecast_model) <- 'Auto'
 
@@ -208,11 +213,29 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
                           PI=show_PI)
         }
 
+        if("ETS" %in% local_baseline_forecasts) {
+
+            forecast_model <- ets(dataset,
+                                  lambda=local_lambda,
+                                  damped=local_damped,
+                                  biasadj=local_biasadj) %>% forecast(h=local_baseline_horizon)
+            comment(forecast_model) <- "ETS"
+
+            log_message_variable('forecast model method', forecast_model$method)
+            local_models <- c(local_models, list(forecast_model))
+
+            ggplot_object <- ggplot_object +
+                autolayer(forecast_model,
+                          series="ETS",
+                          PI=show_PI)
+        }
+
         if("STL + ETS" %in% local_baseline_forecasts) {
 
             forecast_model <- stlf(dataset,
                                    h=local_baseline_horizon,
                                    lambda=local_lambda,
+                                   damped=local_damped,
                                    biasadj=local_biasadj)
             comment(forecast_model) <- "STL + ETS"
 
@@ -845,6 +868,9 @@ renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
                 local_biasadj <- input$var_plots__baseline__biasadj
                 log_message_variable('input$var_plots__baseline__biasadj', local_biasadj)
 
+                local_damped <- input$var_plots__baseline__damped
+                log_message_variable('input$var_plots__baseline__damped', local_damped)
+
                 results <- NULL
                 methods <- c()
                 if('Mean' %in% local_baseline_forecasts) {
@@ -905,8 +931,21 @@ renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
                                                                         forecastfunction=forecast,
                                                                         lambda=local_lambda,
                                                                         biasadj=local_biasadj,
+                                                                        damped=local_damped,
                                                                         h=local_baseline_horizon)))
                 }
+
+
+                # tsCV doesn't seem to work with ets.
+                # if("ETS" %in% local_baseline_forecasts) {
+
+                #     methods <- c(methods, "ETS")
+                #     results <- rbind(results, cross_valid_function(tsCV(local_dataset,
+                #                                                         forecastfunction=ets,
+                #                                                         lambda=local_lambda,
+                #                                                         biasadj=local_biasadj,
+                #                                                         h=local_baseline_horizon)))
+                # }
 
                 if("STL + ETS" %in% local_baseline_forecasts) {
 
@@ -914,6 +953,7 @@ renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
                     results <- rbind(results, cross_valid_function(tsCV(local_dataset,
                                                                         forecastfunction=stlf,
                                                                         lambda=local_lambda,
+                                                                        damped=local_damped,
                                                                         biasadj=local_biasadj,
                                                                         h=local_baseline_horizon)))
                 }
