@@ -254,7 +254,6 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
 
             forecast_model <- auto.arima(dataset,
                                    lambda=local_lambda,
-                                   #damped=local_damped,
                                    biasadj=local_biasadj,
                                    stepwise=TRUE,
                                    approximation=TRUE) %>% 
@@ -275,7 +274,6 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
 
             forecast_model <- auto.arima(dataset,
                                    lambda=local_lambda,
-                                   #damped=local_damped,
                                    biasadj=local_biasadj,
                                    stepwise=FALSE,
                                    approximation=FALSE) %>% 
@@ -1020,7 +1018,6 @@ renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
 
                         auto.arima(x,
                                    lambda=local_lambda,
-                                   #damped=local_damped,
                                    biasadj=local_biasadj,
                                    stepwise=TRUE,
                                    approximation=TRUE) %>% 
@@ -1042,7 +1039,6 @@ renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
 
                         auto.arima(x,
                                    lambda=local_lambda,
-                                   #damped=local_damped,
                                    biasadj=local_biasadj,
                                    stepwise=FALSE,
                                    approximation=FALSE) %>% 
