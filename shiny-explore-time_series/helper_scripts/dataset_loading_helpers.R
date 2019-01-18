@@ -107,7 +107,7 @@ reactive__source_data__creator <- function(input, custom_triggers) {
                 
                     loaded_dataset <- readRDS(file=upload_file_path)
 
-                    classes <- class(x)
+                    classes <- class(loaded_dataset)
                     stopifnot(any(classes == 'ts') || any(classes == 'mts') || any(classes == 'msts'))
 
                 } else {

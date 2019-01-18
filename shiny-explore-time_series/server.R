@@ -160,8 +160,6 @@ shinyServer(function(input, output, session) {
     output$regression__diagnostic_residuals_vs_period <- render_diagnostic_plot__residuals_vs_period(input, session, reactive__source_data, eventReactive__regression__results)
     output$regression__diagnostic_residuals_vs_season <- render_diagnostic_plot__residuals_vs_season(input, session, reactive__source_data, eventReactive__regression__results)
 
-
-
     output$regression__diagnostic_residuals_vs_fitted <- render_diagnostic_plot__residuals_vs_fitted(input, session, reactive__source_data, eventReactive__regression__results)
     output$regression__diagnostic_normal_qq <- render_diagnostic_plot__normal_qq(input, session, reactive__source_data, eventReactive__regression__results)
     output$regression__diagnostic_scale_location <- render_diagnostic_plot__scale_location(input, session, reactive__source_data, eventReactive__regression__results)

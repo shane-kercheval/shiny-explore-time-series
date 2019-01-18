@@ -549,3 +549,13 @@ summary(window(austourists, start=2005) %>% ets(damped=TRUE))
 
 
 
+
+```{r}
+a10 %>%
+    autoplot() +
+    autolayer(ets(a10) %>% forecast(h=24))
+
+
+install.packages('colorspace')
+```
+
