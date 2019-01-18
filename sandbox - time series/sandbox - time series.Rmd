@@ -10,7 +10,7 @@ toc_depth: 4
     
 ```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 library(knitr)
-
+library(forecast)
 # library(lubridate)
 # library(tidyverse)
 library(stringr)
@@ -559,3 +559,45 @@ a10 %>%
 install.packages('colorspace')
 ```
 
+```{r fig.height=7, fig.width=10}
+regression_decomposition <- function(dataset) {
+
+    regression <- tslm(dataset ~ trend + season)
+    # trend <- Intercept + Trend ... seq_along creates a sequence of trends corresponding to the number of data-points in local_dataset
+    trend <- coef(regression)[1] + coef(regression)['trend'] * seq_along(dataset)
+    season <- dataset - trend - residuals(regression)
+    
+    # the seasonal components may throw off the trend (e.g. reference season is 0 and all the rest are negative);
+    # so lets move the trend up/down by the median
+    adjustment <- median(season) * -1
+    trend <- trend - adjustment
+    
+    return (cbind(
+        data = dataset,
+        trend = trend,
+        season = dataset - trend - residuals(regression),
+        remainder = residuals(regression)
+    ))
+}
+dataset <- log(a10)
+components <- regression_decomposition(dataset = dataset)
+# create decomposition graph
+autoplot(components, facet=TRUE, scales = "fixed") + ggtitle("Trend/Season Regression Decomposition")
+
+
+# create a ts object of the trend
+ts_trend <- ts(components[, 'trend'],
+               start=start(dataset),
+               frequency = frequency(dataset))
+trend_layer <- autolayer(ts_trend, series="Trend")
+
+# calculate the seasonally adjusted values by subtracting the seasonal component from the dataset.
+adjust_df <- dataset - components[,'season']
+seas_adj_layer <- autolayer(adjust_df, series="Seasonally Adjusted")
+
+dataset %>% autoplot(series="Data") + 
+    autolayer(components[,'trend'], series="Trend") +
+    autolayer(components[,'trend'] + components[,'season'], series="Fit") +
+    # trend_layer + 
+    seas_adj_layer
+```

@@ -1095,6 +1095,27 @@ renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
     })
 }
 
+
+regression_decomposition <- function(dataset) {
+
+    regression <- tslm(dataset ~ trend + season)
+    # trend <- Intercept + Trend ... seq_along creates a sequence of trends corresponding to the number of data-points in local_dataset
+    trend <- coef(regression)[1] + coef(regression)['trend'] * seq_along(dataset)
+    season <- dataset - trend - residuals(regression)
+    
+    # the seasonal components may throw off the trend (e.g. reference season is 0 and all the rest are negative);
+    # so lets move the trend up/down by the median i.e. center the trend around the season (i.e. season coefficiients);
+    adjustment <- median(season) * -1
+    trend <- trend - adjustment
+    
+    return (cbind(
+        data = dataset,
+        trend = trend,
+        season = dataset - trend - residuals(regression),
+        remainder = residuals(regression)
+    ))
+}
+
 renderPlot__var_plots__decomposition <- function(session, input, dataset) {
 
     renderPlot({
@@ -1102,6 +1123,7 @@ renderPlot__var_plots__decomposition <- function(session, input, dataset) {
         req(dataset())
         req(input$var_plots__decomposition_type)
 
+        local_dataset <- dataset()
         decom_object <- NULL
 
         withProgress(value=1/2, message="Creating Decomposition Graph",{
@@ -1112,26 +1134,33 @@ renderPlot__var_plots__decomposition <- function(session, input, dataset) {
 
             if(input$var_plots__decomposition_type == 'X11') {
 
-                decom_object <- dataset() %>%
+                decom_object <- local_dataset %>%
                                 seas(x11="") %>%
                                 autoplot() +
                                     ggtitle("X11 Decomposition")
 
             } else if(input$var_plots__decomposition_type == 'SEATS') {
 
-                decom_object <- dataset() %>%
+                decom_object <- local_dataset %>%
                                 seas() %>%
                                 autoplot() +
                                     ggtitle("SEATS Decomposition")
 
             } else if(input$var_plots__decomposition_type == 'STL') {
 
-                decom_object <- dataset() %>%
+                decom_object <- local_dataset %>%
                                 mstl() %>%
                                 autoplot() +
                                     ggtitle("STL Decomposition")
 
+            } else if(input$var_plots__decomposition_type == 'Regression') {
+
+                components <- regression_decomposition(dataset = local_dataset)
+                decom_object <- autoplot(components, facet=TRUE, scales = "fixed") +
+                    ggtitle("Trend/Season Regression Decomposition")
+
             }
+
         })
 
         return (decom_object)
@@ -1151,6 +1180,7 @@ renderPlot__var_plots__decomposition_trend_season <- function(session, input, da
         # req(input$var_plots__decomposition__show_trend)
         # req(input$var_plots__decomposition__show_season)
 
+        local_dataset <- dataset()
         decom_object <- NULL
 
         withProgress(value=1/2, message="Creating Decomposition Data Graph",{
@@ -1161,35 +1191,54 @@ renderPlot__var_plots__decomposition_trend_season <- function(session, input, da
 
             if(input$var_plots__decomposition_type == 'X11') {
 
-                decom_fit <- dataset() %>% seas(x11="")
+                decom_fit <- local_dataset %>% seas(x11="")
+                trend_layer <- autolayer(trendcycle(decom_fit), series="Trend")
+                seas_adj_layer <- autolayer(seasadj(decom_fit), series="Seasonally Adjusted")
 
             } else if(input$var_plots__decomposition_type == 'SEATS') {
 
-                decom_fit <- dataset() %>% seas()
+                decom_fit <- local_dataset %>% seas()
+                trend_layer <- autolayer(trendcycle(decom_fit), series="Trend")
+                seas_adj_layer <- autolayer(seasadj(decom_fit), series="Seasonally Adjusted")
 
             } else if(input$var_plots__decomposition_type == 'STL') {
 
-                decom_fit <- dataset() %>% mstl()
+                decom_fit <- local_dataset %>% mstl()
+                trend_layer <- autolayer(trendcycle(decom_fit), series="Trend")
+                seas_adj_layer <- autolayer(seasadj(decom_fit), series="Seasonally Adjusted")
+            
+            } else if(input$var_plots__decomposition_type == "Regression") {
+
+                components <- regression_decomposition(dataset = local_dataset)
+
+                                # create a ts object of the trend
+                ts_trend <- ts(components[, 'trend'],
+                               start=start(local_dataset),
+                               frequency = frequency(local_dataset))
+                trend_layer <- autolayer(ts_trend, series="Trend")
+
+                # calculate the seasonally adjusted values by subtracting the seasonal component from the local_dataset.
+                adjust_df <- local_dataset - components[,'season']
+                seas_adj_layer <- autolayer(adjust_df, series="Seasonally Adjusted")
             }
 
-            decom_object <- dataset() %>% autoplot(series="Data")
+            decom_object <- local_dataset %>% autoplot(series="Data")
             scale_colour_manual_values <- c('gray')
             scale_colour_manual_breaks <- c("Data")
 
             if(input$var_plots__decomposition__show_season) {
 
-                decom_object <- decom_object + autolayer(seasadj(decom_fit), series="Seasonally Adjusted")
+                decom_object <- decom_object + trend_layer
                 scale_colour_manual_values <- c(scale_colour_manual_values, 'blue')
                 scale_colour_manual_breaks <- c(scale_colour_manual_breaks, "Seasonally Adjusted")
             }
 
             if(input$var_plots__decomposition__show_trend) {
 
-                decom_object <- decom_object + autolayer(trendcycle(decom_fit), series="Trend")
+                decom_object <- decom_object + seas_adj_layer
                 scale_colour_manual_values <- c(scale_colour_manual_values, 'red')
                 scale_colour_manual_breaks <- c(scale_colour_manual_breaks, "Trend")
             }
-
         })
 
         decom_object <- decom_object + scale_colour_manual(values=scale_colour_manual_values,
