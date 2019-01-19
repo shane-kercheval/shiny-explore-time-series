@@ -560,27 +560,46 @@ install.packages('colorspace')
 ```
 
 ```{r fig.height=7, fig.width=10}
-regression_decomposition <- function(dataset) {
+regression_decomposition <- function(dataset, loess_span=NULL) {
 
     regression <- tslm(dataset ~ trend + season)
+    reg_residuals <- residuals(regression)
     # trend <- Intercept + Trend ... seq_along creates a sequence of trends corresponding to the number of data-points in local_dataset
     trend <- coef(regression)[1] + coef(regression)['trend'] * seq_along(dataset)
-    season <- dataset - trend - residuals(regression)
-    
-    # the seasonal components may throw off the trend (e.g. reference season is 0 and all the rest are negative);
-    # so lets move the trend up/down by the median
-    adjustment <- median(season) * -1
-    trend <- trend - adjustment
-    
+    # extract season before we change trend/residuals from loess, if applicable
+    season <- dataset - trend - reg_residuals
+
+    if(!is.null(loess_span)) {
+        
+        temp_data <- data.frame(trend=1:length(dataset), data=as.numeric(dataset))
+        loess_trend <- loess(data ~ trend, data=temp_data, span=loess_span)
+        
+        # get new curved trend
+        trend <- predict(loess_trend)
+        # # the seasonal components may throw off the trend (e.g. reference season is 0 and all the rest are negative);
+        # # so lets move the trend up/down by the median
+        # adjustment <- median(season) * -1
+        # trend <- trend - adjustment
+
+        # recalculate residuals based on new trend and old season
+        reg_residuals <- dataset - trend - season
+    } else {
+#        season <- dataset - trend - reg_residuals
+        # the seasonal components may throw off the trend (e.g. reference season is 0 and all the rest are negative);
+        # so lets move the trend up/down by the median
+        adjustment <- median(season) * -1
+        trend <- trend - adjustment
+    }
+
     return (cbind(
         data = dataset,
         trend = trend,
-        season = dataset - trend - residuals(regression),
-        remainder = residuals(regression)
+        season = dataset - trend - reg_residuals,
+        remainder = reg_residuals
     ))
 }
 dataset <- log(a10)
-components <- regression_decomposition(dataset = dataset)
+components <- regression_decomposition(dataset = dataset, loess_span = NULL)
 # create decomposition graph
 autoplot(components, facet=TRUE, scales = "fixed") + ggtitle("Trend/Season Regression Decomposition")
 
@@ -600,4 +619,93 @@ dataset %>% autoplot(series="Data") +
     autolayer(components[,'trend'] + components[,'season'], series="Fit") +
     # trend_layer + 
     seas_adj_layer
+```
+
+```{r fig.height=7, fig.width=10}
+
+dataset <- ts(c(...),
+            start=2017,
+            frequency = 12)
+components <- regression_decomposition(dataset = dataset, loess_span = 1)
+# create decomposition graph
+autoplot(components, facet=TRUE, scales = "fixed") + ggtitle("Trend/Season Regression Decomposition")
+
+
+# create a ts object of the trend
+ts_trend <- ts(components[, 'trend'],
+               start=start(dataset),
+               frequency = frequency(dataset))
+trend_layer <- autolayer(ts_trend, series="Trend")
+
+# calculate the seasonally adjusted values by subtracting the seasonal component from the dataset.
+adjust_df <- dataset - components[,'season']
+seas_adj_layer <- autolayer(adjust_df, series="Seasonally Adjusted")
+
+dataset %>% autoplot(series="Data") + 
+    autolayer(components[,'trend'], series="Trend") +
+    #autolayer(components[,'trend'] + components[,'season'], series="Fit") +
+    # trend_layer + 
+    seas_adj_layer +
+    scale_colour_manual(values=c('gray', 'blue', 'red'),
+                        breaks=c('Data', 'Seasonally Adjusted', 'Trend'))
+```
+
+
+
+```{r fig.height=7, fig.width=10}
+# doesn't work that great
+loess_decomposition <- function(dataset) {
+    
+    temp_data <- data.frame(trend=1:length(dataset), season=as.numeric(cycle(dataset)), data=as.numeric(dataset))
+ 
+    loess_trend <- loess(data ~ trend, data=temp_data, span=1)
+    loess_season <- loess(data ~ trend + season, data=temp_data, span=0.5)
+    # summary(loess_results)
+    # temp_data$predictions <- predict(loess_results)
+    # temp_data %>%
+    #     select(-season) %>%
+    #     gather(type, value, -trend) %>%
+    # ggplot(aes(x = trend, y=value, color=type)) +
+    #     geom_line()
+
+    # trend <- Intercept + Trend ... seq_along creates a sequence of trends corresponding to the number of data-points in local_dataset
+    trend <- predict(loess_trend)
+    season <- dataset - trend - residuals(loess_season)
+    
+    # the seasonal components may throw off the trend (e.g. reference season is 0 and all the rest are negative);
+    # so lets move the trend up/down by the median
+    adjustment <- median(season) * -1
+    trend <- trend - adjustment
+    
+    return (cbind(
+        data = dataset,
+        trend = trend,
+        season = dataset - trend - residuals(loess_season),
+        remainder = residuals(loess_season)
+    ))
+}
+
+dataset <- log(a10)
+components <- loess_decomposition(dataset = dataset)
+# create decomposition graph
+autoplot(components, facet=TRUE, scales = "fixed") + ggtitle("Trend/Season Regression Decomposition")
+
+
+# create a ts object of the trend
+ts_trend <- ts(components[, 'trend'],
+               start=start(dataset),
+               frequency = frequency(dataset))
+trend_layer <- autolayer(ts_trend, series="Trend")
+
+# calculate the seasonally adjusted values by subtracting the seasonal component from the dataset.
+adjust_df <- dataset - components[,'season']
+seas_adj_layer <- autolayer(adjust_df, series="Seasonally Adjusted")
+
+dataset %>% autoplot(series="Data") + 
+    autolayer(components[,'trend'], series="Trend") +
+    #autolayer(components[,'trend'] + components[,'season'], series="Fit") +
+    # trend_layer + 
+    seas_adj_layer +
+    scale_colour_manual(values=c('gray', 'blue', 'red'),
+                        breaks=c('Data', 'Seasonally Adjusted', 'Trend'))
 ```
