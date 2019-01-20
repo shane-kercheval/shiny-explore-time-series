@@ -307,7 +307,6 @@ render_diagnostic_plot <- function(regression__results, graph_function, graph_wi
     )
 }
 
-
 render_diagnostic_plot__fit_forecast <- function(input, session, dataset, regression__results) {
 
     render_diagnostic_plot(
