@@ -572,8 +572,19 @@ reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_t
         # reactive data
         local_dataset <- dataset()
         
-        ggplot_object <- local_dataset %>%
-            autoplot(facets=input$var_plots__facet) %>%
+        if(is.null(input$var_plots__facet) || !input$var_plots__facet || rt_ts_is_single_variable(local_dataset)) {
+    
+            ggplot_object <- local_dataset %>%
+                autoplot()
+        
+        } else {
+
+            ggplot_object <- local_dataset %>%
+                autoplot(facets=input$var_plots__facet)
+            
+        }
+
+        ggplot_object <- ggplot_object %>%
             helper_add_baseline_forecasts(input, local_dataset, isolate(reactiveValues_models)) %>%
             helper_y_zoom(input, local_dataset) %>%
             helper_add_labels(input, local_dataset) %>%
