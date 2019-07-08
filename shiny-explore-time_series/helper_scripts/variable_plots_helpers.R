@@ -588,7 +588,9 @@ reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_t
             helper_add_baseline_forecasts(input, local_dataset, isolate(reactiveValues_models)) %>%
             helper_y_zoom(input, local_dataset) %>%
             helper_add_labels(input, local_dataset) %>%
-            helper_add_transformation_y_axis_label(reactiveValue_trans)
+            helper_add_transformation_y_axis_label(reactiveValue_trans) +
+            theme_light() +
+            expand_limits(y=0)
     })
 }
 
@@ -613,7 +615,8 @@ reactive__var_plots__auto_correlation__ggplot__creator <- function(input, datase
             }
 
             log_message_variable('input$var_plots__auto_correlation_lags', lags)
-            ggplot_object <- local_dataset %>% ggAcf(lag=lags)
+            ggplot_object <- local_dataset %>% ggAcf(lag=lags) +
+            theme_light()
         }
     })
 }
@@ -658,7 +661,9 @@ reactive__var_plots__season__ggplot__creator <- function(input, dataset, reactiv
                     ggseasonplot(year.labels=TRUE, year.labels.left=TRUE) %>%
                     helper_y_zoom(input, local_dataset) %>%
                     helper_add_labels(input, local_dataset) %>%
-                    helper_add_transformation_y_axis_label(reactiveValue_trans)
+                    helper_add_transformation_y_axis_label(reactiveValue_trans) +
+                    theme_light() +
+                    expand_limits(y=0)
             }
         }
 
@@ -687,7 +692,8 @@ reactive__var_plots__scatter_matrix__ggplot__creator <- function(input, dataset,
             ggplot_object <- local_dataset %>%
                 as.data.frame() %>%
                 GGally::ggpairs()%>%
-                helper_add_transformation_y_axis_label(reactiveValue_trans)
+                helper_add_transformation_y_axis_label(reactiveValue_trans) +
+                theme_light()
         } 
     })
 }
@@ -705,12 +711,14 @@ renderUI__var_plots__ts_variables__UI <- function(dataset) {
 
             column_names <- colnames(as.data.frame(local_dataset) %>% select_if(is.numeric))
 
-            return (checkboxGroupInput(inputId='var_plots__ts_variables',
-                                       label=NULL,
-                                       choices=column_names,
-                                       selected=column_names[1],
-                                       inline=FALSE,
-                                       width=NULL))
+            selectInput(inputId='var_plots__ts_variables',
+                        label = NULL,
+                        choices = column_names,
+                        selected = column_names[1],
+                        multiple = TRUE,
+                        selectize = TRUE,
+                        #width = 500,
+                        size = NULL)
 
         } else {
 
@@ -766,7 +774,7 @@ renderPlot__var_plots__seasonal <- function(session, ggplot_object) {
     return(renderPlot__var_plots__helper(session,
                                          ggplot_object,
                                          'Creating Seasonal Graph',
-                                         function() { session$clientData$output_var_plots_width * 0.66 }))
+                                         function() { session$clientData$output_var_plots__seasonal_width * 0.55 }))
 }
 
 renderPlot__var_plots__scatter_matrix <- function(session, ggplot_object) {
@@ -774,7 +782,7 @@ renderPlot__var_plots__scatter_matrix <- function(session, ggplot_object) {
     return(renderPlot__var_plots__helper(session,
                                          ggplot_object,
                                          'Creating Scatter Matrix Graph',
-                                         function() { session$clientData$output_var_plots_width * 0.66 }))
+                                         function() { session$clientData$output_var_plots__scatter_matrix_width * 0.66 }))
 }
 
 renderPlot__var_plots__auto_correlation <- function(session, ggplot_object) {
@@ -842,7 +850,7 @@ renderPlot__var_plots__residuals_plot <- function(session, reactiveValues_models
 
     }, height = function() {
 
-        session$clientData$output_var_plots_width * 0.66  # set height to % of width
+        session$clientData$output_var_plots__residuals_plot_width * 0.66  # set height to % of width
     })
 }
 
@@ -1079,7 +1087,8 @@ renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
                         expand_limits(y=0) +
                         ylab(local_cross_val_metric) + xlab('Steps Ahead') +
                         geom_text(aes(label=round(value, 1)), check_overlap=TRUE, vjust=1, hjust=1) +
-                        theme(axis.text.x = element_text(angle = 30, hjust = 1))
+                        theme(axis.text.x = element_text(angle = 30, hjust = 1)) +
+                        theme_light()
 
                 if(!is.null(local_lambda) || local_biasadj) {
 
@@ -1102,7 +1111,7 @@ renderPlot__var_plots__cross_validation <- function(session, input, dataset) {
         })
     }, height = function() {
 
-        session$clientData$output_var_plots_width * 0.66  # set height to % of width
+        session$clientData$output_var_plots__cross_validation_width * 0.66  # set height to % of width
     })
 }
 
@@ -1172,12 +1181,15 @@ renderPlot__var_plots__decomposition <- function(session, input, dataset) {
 
             }
 
+            decom_object <- decom_object +
+            theme_light()
+
         })
 
         return (decom_object)
     }, height = function() {
 
-        session$clientData$output_var_plots_width * 0.80  # set height to % of width
+        session$clientData$output_var_plots__decomposition_width * 0.65  # set height to % of width
     })
 }
 
@@ -1253,13 +1265,15 @@ renderPlot__var_plots__decomposition_trend_season <- function(session, input, da
         })
 
         decom_object <- decom_object + scale_colour_manual(values=scale_colour_manual_values,
-                                                           breaks=scale_colour_manual_breaks)
+                                                           breaks=scale_colour_manual_breaks) +
+        theme_light() +
+        expand_limits(y=0)
 
         return (decom_object)
 
     }, height = function() {
 
-        session$clientData$output_var_plots_width * 0.66  # set height to % of width
+        session$clientData$output_var_plots__decomposition_trend_season_width * 0.55  # set height to % of width
     })
 }
 
@@ -1311,7 +1325,7 @@ observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type <- function(se
 
             shinyjs::show('var_plots__baseline__forecast_horizon')
             shinyjs::show('var_plots__baseline_forecasts')
-            updateCollapse(session, 'var_plots__bscollapse', open='Baseline Forecasts')
+            #updateCollapse(session, 'var_plots__bscollapse', open='Baseline Forecasts')
 
         } else {
 
@@ -1320,7 +1334,7 @@ observe__var_plots__hide_show_uncollapse_on_filtered_dataset_type <- function(se
             shinyjs::hide('autocorrelation_explanation')
 
 
-            updateCollapse(session, 'var_plots__bscollapse', close='Baseline Forecasts')
+            #updateCollapse(session, 'var_plots__bscollapse', close='Baseline Forecasts')
             shinyjs::hide('var_plots__baseline__forecast_horizon')
             shinyjs::hide('var_plots__baseline_forecasts')
         }
@@ -1355,16 +1369,17 @@ observeEvent__var_plots__variables_toggle <- function(session, input, dataset) {
         if(length(local_variables) == 0) {
 
             column_names <- colnames(as.data.frame(local_dataset) %>% select_if(is.numeric))
-            updateCheckboxGroupInput(session=session,
-                                     inputId='var_plots__ts_variables',
-                                     selected=column_names)
+
+            updateSelectInput(session=session,
+                              inputId='var_plots__ts_variables',
+                              selected=column_names)
         } else {
 
-            updateCheckboxGroupInput(session=session,
-                                     inputId='var_plots__ts_variables',
-                                     selected=character(0))
+            updateSelectInput(session=session,
+                              inputId='var_plots__ts_variables',
+                              selected=character(0))
 
-            # seems like a bug, updateCheckboxGroupInput doesn't trigger observeEvent for var_plots__ts_variables
+            # seems like a bug, updateSelectInput doesn't trigger observeEvent for var_plots__ts_variables
             updateCollapse(session, "var_plots__bscollapse", style = list('Variables' = 'danger'))
         }
     }))

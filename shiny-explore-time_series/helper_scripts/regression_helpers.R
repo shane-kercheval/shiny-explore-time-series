@@ -147,12 +147,14 @@ renderUI__regression__independent_variables__UI <- function(input, dataset) {
         independent_variables <- helper_create_ts_regression_variables(dataset(),
                                                                        variables_to_exclude=input$regression__dependent_variable)
 
-        checkboxGroupInput(inputId='regression__independent_variables',
-                           label="Independent Variables",
-                           choices=independent_variables,
-                           selected=independent_variables,
-                           inline=FALSE,
-                           width=NULL)
+        selectInput(inputId='regression__independent_variables',
+                    label = 'Independent Variables',
+                    choices = independent_variables,
+                    selected = built_in_ts_variables,
+                    multiple = TRUE,
+                    selectize = TRUE,
+                    width = 500,
+                    size = NULL)
     })
 }
 
@@ -231,15 +233,15 @@ observeEvent__regression__toggle_all_ind_variables <- function(input, dataset, s
             variables <- helper_create_ts_regression_variables(dataset(),
                                                                variables_to_exclude=input$regression__dependent_variable)
 
-            updateCheckboxGroupInput(session=session,
-                                     inputId='regression__independent_variables',
-                                     selected=variables)
+            updateSelectInput(session=session,
+                              inputId='regression__independent_variables',
+                              selected=variables)
 
         } else {
 
-            updateCheckboxGroupInput(session=session,
-                                     inputId='regression__independent_variables',
-                                     selected=character(0))
+            updateSelectInput(session=session,
+                              inputId='regression__independent_variables',
+                              selected=character(0))
         }
     })
 }
@@ -312,7 +314,7 @@ render_diagnostic_plot__fit_forecast <- function(input, session, dataset, regres
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { regression__results()$plot_fit},
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_fit_forecast_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_fit_forecast_width}
     )
 }
 
@@ -321,7 +323,7 @@ render_diagnostic_plot__check_residuals_plots <- function(input, session, datase
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { checkresiduals(regression__results()$model) },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_check_residuals_plots_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_check_residuals_plots_width}
     )
 }
 
@@ -330,7 +332,7 @@ render_diagnostic_plot__actual_vs_fitted <- function(input, session, dataset, re
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { regression__results()$plot_actual_vs_fitted},
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_actual_vs_fitted_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_actual_vs_fitted_width}
     )
 }
 
@@ -339,7 +341,7 @@ render_diagnostic_plot__residuals_vs_fitted <- function(input, session, dataset,
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { regression__results()$plot_residuals_vs_fitted },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_fitted_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_residuals_vs_fitted_width}
     )
 }
 
@@ -348,7 +350,7 @@ render_diagnostic_plot__residuals_vs_predictors <- function(input, session, data
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { regression__results()$plot_residuals_vs_predictors },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_predictors_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_residuals_vs_predictors_width}
     )
 }
 
@@ -365,7 +367,7 @@ render_diagnostic_plot__residuals_vs_period <- function(input, session, dataset,
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { regression__results()$plot_residuals_vs_period },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_period_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_residuals_vs_period_width}
     )
 }
 
@@ -374,7 +376,7 @@ render_diagnostic_plot__residuals_vs_season <- function(input, session, dataset,
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { regression__results()$plot_residuals_vs_season },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_season_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_residuals_vs_season_width}
     )
 }
 
@@ -387,7 +389,7 @@ render_diagnostic_plot__actual_vs_observed <- function(input, session, dataset, 
                    type=c('p', 'g'),
                    xlab='Observation Number', ylab='Predicted')
         },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_actual_vs_observed_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_actual_vs_observed_width}
     )
 }
 
@@ -396,7 +398,7 @@ render_diagnostic_plot__normal_qq <- function(input, session, dataset, regressio
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { plot(regression__results()$model, which=2) },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_normal_qq_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_normal_qq_width}
     )
 }
 
@@ -405,7 +407,7 @@ render_diagnostic_plot__scale_location <- function(input, session, dataset, regr
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { plot(regression__results()$model, which=3) },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_scale_location_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_scale_location_width}
     )
 }
 
@@ -414,7 +416,7 @@ render_diagnostic_plot__cooks_distance <- function(input, session, dataset, regr
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { plot(regression__results()$model, which=4) },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_cooks_distance_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_cooks_distance_width}
     )
 }
 
@@ -423,7 +425,7 @@ render_diagnostic_plot__residuals_vs_leverage <- function(input, session, datase
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { plot(regression__results()$model, which=5) },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_residuals_vs_leverage_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_residuals_vs_leverage_width}
     )
 }
 
@@ -432,6 +434,6 @@ render_diagnostic_plot__cooks_distance_vs_leverage <- function(input, session, d
     render_diagnostic_plot(
         regression__results,
         graph_function=function() { plot(regression__results()$model, which=6) },
-        graph_width_function=function() {0.66 * session$clientData$output_regression__diagnostic_cooks_distance_vs_leverage_width}
+        graph_width_function=function() {0.60 * session$clientData$output_regression__diagnostic_cooks_distance_vs_leverage_width}
     )
 }

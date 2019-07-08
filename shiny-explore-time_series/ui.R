@@ -9,8 +9,7 @@ shinyUI(fluidPage(theme="custom.css",
 
     useShinyjs(),
 
-    titlePanel("Explore Time Series"),
-    navlistPanel(
+    navbarPage(title = 'Explore Dataset',
         tabPanel(
             "Load Dataset",
             tabsetPanel(type='tabs',
@@ -62,66 +61,10 @@ shinyUI(fluidPage(theme="custom.css",
             )
         ),
         tabPanel(
-            "Numeric Summary",
-            column(2,
-                   class='column-input-control-style',
-                   tags$div(class='input-control-style', uiOutput('numeric_summary__options__UI'))
-            ),
-            column(10, tags$div(class='results-table', dataTableOutput(outputId='numeric_summary__table')))
-        ),
-        tabPanel(
-            "Categoric Summary",
-            tags$div(class='results-table', dataTableOutput(outputId='categoric_summary__table')),
-            tags$br(),
-            h4("Summary of Values"),
-            tags$div(style='width: 800px', verbatimTextOutput(outputId='categoric_summary__text'))
-        ),
-        tabPanel(
-            "Correlations",
-            column(
-                2,
-                class='column-input-control-style',
-                tags$div(
-                    class='input-control-style',
-                    numericInput(inputId='correlation__num_lags',
-                                 label="Number of Lags",
-                                 value=NULL),
-                    bsTooltip(id='correlation__num_lags',
-                                  title="For each variable, adds x number of corresponding lagged variables.",
-                                  placement='bottom', trigger='hover'),
-                    sliderInput(inputId='correlation__corr_threshold',
-                                    label="Min Correlation Threshold", ## percent increase
-                                    min=0,
-                                    max=1,
-                                    step=0.05,
-                                    value=0),
-                    sliderInput(inputId='correlation__p_value_threshold',
-                                    label="Max P-Value Treshold",
-                                    min=0,
-                                    max=1,
-                                    step=0.05,
-                                    value=1),
-                    sliderInput(inputId='correlation__base_size',
-                                    label="Text Size",
-                                    min=6,
-                                    max=20,
-                                    step=1,
-                                    value=15),
-                    checkboxInput(inputId='correlation__pretty_text',
-                                  label="Pretty Text", value=FALSE, width=NULL)
-                    )
-            ),
-            column(10,
-                   plotOutput(outputId='correlation__plot'),
-                   tags$p("For multi-variable time-series data, this graph shows the correlation coefficients for each pair of variables."),
-                   tags$p("Correlation is a measure of strength of the *linear* relationship between two variables, and can sometimes be misleading for non-linear relationships. The correlation coefficients lie between -1 and 1.")
-            )
-        ),
-        tabPanel(
             "Plots",
             column(3,
                 class='column-input-control-style',
-                bsCollapse(id='var_plots__bscollapse', open=c("Options", "Transformations", "Decomposition"), multiple=TRUE,
+                bsCollapse(id='var_plots__bscollapse', open=c("Options"), multiple=TRUE,
                     bsCollapsePanel(
                         "Options",
                         uiOutput('var_plots__date_slider__UI'),
@@ -143,42 +86,26 @@ shinyUI(fluidPage(theme="custom.css",
                         style='default'
                     ),
                     bsCollapsePanel(
-                        "Transformations",
+                        "Decomposition",
+
+                        selectInput(inputId='var_plots__decomposition_type',
+                                    label="Decomp Type:",
+                                    choices=c("X11",
+                                              "SEATS",
+                                              "STL",
+                                              "Regression"),
+                                    selected="STL"),
                         tags$div(class='bold_checkbox_input',
-                                 checkboxInput(inputId='var_plots__transformation__daily_average',
-                                               label="To Daily Average", value=FALSE)
+                                 checkboxInput(inputId='var_plots__decomposition__show_trend',
+                                               label="Show Trend",
+                                               value=TRUE)
                         ),
-                        tooltip_transformation_not_backtransformed('var_plots__transformation__daily_average'),
-                        inline_control(
-                            label_text="Log:",
-                            padding_top_px=22,
-                            control=sliderTextInput(inputId='var_plots__transformation_log',
-                                                    label="",
-                                                    choices=c("None", "e", "2", "10"),
-                                                    selected="None",
-                                                    grid=TRUE)
+                        tags$div(class='bold_checkbox_input',
+                                 checkboxInput(inputId='var_plots__decomposition__show_season',
+                                               label="Show Seasonally Adjusted",
+                                               value=TRUE)
                         ),
-                        inline_control(
-                            label_text="Power:",
-                            padding_top_px=22,
-                            control=sliderTextInput(inputId='var_plots__transformation_power',
-                                                    label="",
-                                                    choices=c("None",seq(2, 20, 1)),
-                                                    selected="None",
-                                                    grid=TRUE)
-                        ),
-                        inline_control(
-                            label_text="Box-Cox:",
-                            padding_top_px=22,
-                            control=sliderTextInput(inputId='var_plots__transformation_boxcox',
-                                                    label="",
-                                                    choices=c("None", "Auto", seq(0, 1, 0.10)),
-                                                    selected="None",
-                                                    grid=TRUE)
-                        ),
-                        tooltip_transformation_not_backtransformed('var_plots__transformation_log'),
-                        tooltip_transformation_not_backtransformed('var_plots__transformation_power'),
-                        tooltip_transformation_not_backtransformed('var_plots__transformation_boxcox')
+                        style='default'
                     ),
                     bsCollapsePanel(
                         "Baseline Forecasts",
@@ -238,28 +165,6 @@ shinyUI(fluidPage(theme="custom.css",
                         style='default'
                     ),
                     bsCollapsePanel(
-                        "Decomposition",
-
-                        selectInput(inputId='var_plots__decomposition_type',
-                                    label="Decomp Type:",
-                                    choices=c("X11",
-                                              "SEATS",
-                                              "STL",
-                                              "Regression"),
-                                    selected="STL"),
-                        tags$div(class='bold_checkbox_input',
-                                 checkboxInput(inputId='var_plots__decomposition__show_trend',
-                                               label="Show Trend",
-                                               value=TRUE)
-                        ),
-                        tags$div(class='bold_checkbox_input',
-                                 checkboxInput(inputId='var_plots__decomposition__show_season',
-                                               label="Show Seasonally Adjusted",
-                                               value=TRUE)
-                        ),
-                        style='default'
-                    ),
-                    bsCollapsePanel(
                         "Variables",
                         fluidRow(
                             column(4,
@@ -275,6 +180,44 @@ shinyUI(fluidPage(theme="custom.css",
                         ),
                         uiOutput('var_plots__ts_variables__UI'),
                         style='default'
+                    ),
+                    bsCollapsePanel(
+                        "Transformations",
+                        tags$div(class='bold_checkbox_input',
+                                 checkboxInput(inputId='var_plots__transformation__daily_average',
+                                               label="To Daily Average", value=FALSE)
+                        ),
+                        tooltip_transformation_not_backtransformed('var_plots__transformation__daily_average'),
+                        inline_control(
+                            label_text="Log:",
+                            padding_top_px=22,
+                            control=sliderTextInput(inputId='var_plots__transformation_log',
+                                                    label="",
+                                                    choices=c("None", "e", "2", "10"),
+                                                    selected="None",
+                                                    grid=TRUE)
+                        ),
+                        inline_control(
+                            label_text="Power:",
+                            padding_top_px=22,
+                            control=sliderTextInput(inputId='var_plots__transformation_power',
+                                                    label="",
+                                                    choices=c("None",seq(2, 20, 1)),
+                                                    selected="None",
+                                                    grid=TRUE)
+                        ),
+                        inline_control(
+                            label_text="Box-Cox:",
+                            padding_top_px=22,
+                            control=sliderTextInput(inputId='var_plots__transformation_boxcox',
+                                                    label="",
+                                                    choices=c("None", "Auto", seq(0, 1, 0.10)),
+                                                    selected="None",
+                                                    grid=TRUE)
+                        ),
+                        tooltip_transformation_not_backtransformed('var_plots__transformation_log'),
+                        tooltip_transformation_not_backtransformed('var_plots__transformation_power'),
+                        tooltip_transformation_not_backtransformed('var_plots__transformation_boxcox')
                     )
                 )
             ),
@@ -347,12 +290,71 @@ shinyUI(fluidPage(theme="custom.css",
             )
         ),
         tabPanel(
+            "Numeric Summary",
+            column(2,
+                   class='column-input-control-style',
+                   tags$div(class='input-control-style', uiOutput('numeric_summary__options__UI'))
+            ),
+            column(10, tags$div(class='results-table', dataTableOutput(outputId='numeric_summary__table')))
+        ),
+        tabPanel(
+            "Categoric Summary",
+            tags$div(class='results-table', dataTableOutput(outputId='categoric_summary__table')),
+            tags$br(),
+            h4("Summary of Values"),
+            tags$div(style='width: 800px', verbatimTextOutput(outputId='categoric_summary__text'))
+        ),
+        tabPanel(
+            "Correlations",
+            column(
+                2,
+                class='column-input-control-style',
+                tags$div(
+                    class='input-control-style',
+                    numericInput(inputId='correlation__num_lags',
+                                 label="Number of Lags",
+                                 value=NULL),
+                    bsTooltip(id='correlation__num_lags',
+                                  title="For each variable, adds x number of corresponding lagged variables.",
+                                  placement='bottom', trigger='hover'),
+                    sliderInput(inputId='correlation__corr_threshold',
+                                    label="Min Correlation Threshold", ## percent increase
+                                    min=0,
+                                    max=1,
+                                    step=0.05,
+                                    value=0),
+                    sliderInput(inputId='correlation__p_value_threshold',
+                                    label="Max P-Value Treshold",
+                                    min=0,
+                                    max=1,
+                                    step=0.05,
+                                    value=1),
+                    sliderInput(inputId='correlation__base_size',
+                                    label="Text Size",
+                                    min=6,
+                                    max=20,
+                                    step=1,
+                                    value=15),
+                    checkboxInput(inputId='correlation__pretty_text',
+                                  label="Pretty Text", value=FALSE, width=NULL)
+                    )
+            ),
+            column(10,
+                   plotOutput(outputId='correlation__plot'),
+                   tags$p("For multi-variable time-series data, this graph shows the correlation coefficients for each pair of variables."),
+                   tags$p("Correlation is a measure of strength of the *linear* relationship between two variables, and can sometimes be misleading for non-linear relationships. The correlation coefficients lie between -1 and 1.")
+            )
+        ),
+        tabPanel(
             "Regression",
             column(3,
                 class='column-input-control-style',
                 bsCollapse(id='regression__collapse_controls', open=c("Variables", "Options"), multiple=TRUE,
                     bsCollapsePanel(
                         "Variables",
+                        tags$div(style='margin-bottom: 25px;',
+                                 actionButton(inputId='regression__run_button', label="Run Regression")
+                        ),
                         uiOutput('regression__dependent_variable__UI'),
                         uiOutput('regression__independent_variables__UI'),
                         actionButton(inputId='regression__toggle_all_ind_variables',
@@ -402,9 +404,6 @@ shinyUI(fluidPage(theme="custom.css",
             column(9,
                 tabsetPanel(type="tabs",
                     tabPanel("Output",
-                        tags$br(),
-                        actionButton(inputId='regression__run_button', label="Run Regression"),
-                        tags$br(),tags$br(),
                         hidden(tags$h4(id='regression__formula_header', 'Formula')),
                         verbatimTextOutput(outputId='regression__formula'),
                         tags$br(),
@@ -412,10 +411,6 @@ shinyUI(fluidPage(theme="custom.css",
                         verbatimTextOutput(outputId='regression__summary_output'),
                         tags$br(),
                         verbatimTextOutput(outputId='regression__cross_validation')
-                    ),
-                    tabPanel("VIFs",
-                        hidden(tags$h4(id='regression__vif_header', "Variance Inflation Factors")),
-                        verbatimTextOutput(outputId='regression__summary_vif')
                     ),
                     tabPanel("Diagnostic Plots",
                         tags$br(),
@@ -459,10 +454,13 @@ shinyUI(fluidPage(theme="custom.css",
                                 plotOutput(outputId='regression__diagnostic_cooks_distance_vs_leverage')
                             )
                         )
+                    ),
+                    tabPanel("VIFs",
+                        hidden(tags$h4(id='regression__vif_header', "Variance Inflation Factors")),
+                        verbatimTextOutput(outputId='regression__summary_vif')
                     )
                 )   
             )
-        ),
-        widths=c(2,10)
+        )
     )
 ))
