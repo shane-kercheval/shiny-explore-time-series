@@ -71,6 +71,12 @@ shinyUI(fluidPage(theme="custom.css",
                         bsTooltip(id='var_plots__date_slider__UI',
                                   title="Filters out underlying data (e.g. both from the graph and forecasting).",
                                   placement='bottom', trigger='hover'),
+                        tags$div(class='bold_checkbox_input',
+                            checkboxInput(inputId='var_plots__include_last_point', label="Include Last Point", value=TRUE)
+                        ),
+                        bsTooltip(id='var_plots__include_last_point',
+                                  title="If unchecked, removes the last point from the dataset.",
+                                  placement='bottom', trigger='hover'),
                         numericInput(inputId='var_plots__y_zoom_min',
                                      label="Y-Axis Zoom Min",
                                      value=NULL),
@@ -80,9 +86,17 @@ shinyUI(fluidPage(theme="custom.css",
                         tooltip_zoom_not_filter('var_plots__y_zoom_min'),
                         tooltip_zoom_not_filter('var_plots__y_zoom_max'),
                         tags$div(class='bold_checkbox_input',
-                                 checkboxInput(inputId='var_plots__show_values', label="Show Values", value=FALSE)
+                            checkboxInput(inputId='var_plots__show_values', label="Show Values", value=FALSE)
                         ),
-                        checkboxInput(inputId='var_plots__facet', label="Seperate Axes", value=FALSE),
+                        tags$div(class='bold_checkbox_input',
+                            checkboxInput(inputId='var_plots__show_points', label="Show Points", value=FALSE)
+                        ),
+                        tags$div(class='bold_checkbox_input',
+                            checkboxInput(inputId='var_plots__show_dates', label="Show Dates", value=FALSE)
+                        ),
+                        tags$div(class='bold_checkbox_input',
+                            checkboxInput(inputId='var_plots__facet', label="Seperate Axes", value=FALSE)
+                        ),
                         style='default'
                     ),
                     bsCollapsePanel(
@@ -297,13 +311,13 @@ shinyUI(fluidPage(theme="custom.css",
             ),
             column(10, tags$div(class='results-table', dataTableOutput(outputId='numeric_summary__table')))
         ),
-        tabPanel(
-            "Categoric Summary",
-            tags$div(class='results-table', dataTableOutput(outputId='categoric_summary__table')),
-            tags$br(),
-            h4("Summary of Values"),
-            tags$div(style='width: 800px', verbatimTextOutput(outputId='categoric_summary__text'))
-        ),
+        # tabPanel(
+        #     "Categoric Summary",
+        #     tags$div(class='results-table', dataTableOutput(outputId='categoric_summary__table')),
+        #     tags$br(),
+        #     h4("Summary of Values"),
+        #     tags$div(style='width: 800px', verbatimTextOutput(outputId='categoric_summary__text'))
+        # ),
         tabPanel(
             "Correlations",
             column(

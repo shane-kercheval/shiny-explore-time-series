@@ -13,6 +13,17 @@ reactive__var_plots__filtered_data__creator <- function(input, dataset, date_sli
 
         local_dataset <- dataset()  # clear on new datasets
 
+        if(input$var_plots__include_last_point == FALSE) {
+            # remove last point
+            if(rt_ts_is_single_variable(local_dataset)) {
+
+                local_dataset <- head(local_dataset, length(local_dataset) - 1)
+            } else {
+
+                local_dataset <- head(local_dataset, nrow(local_dataset) - 1)
+            }
+        }
+
         # filter on window
         local_start_end <- date_slider()
 
@@ -386,23 +397,23 @@ helper_y_zoom <- function(ggplot_object, input, dataset) {
 
 format_labels <- function(values) {
 
-    if(max(values) > 1000000) {
+    if(max(values, na.rm=TRUE) > 1000000) {
 
         values <- paste0(round(values / 1000000, 2), 'M')
 
-    } else if(max(values) > 100000) {
+    } else if(max(values, na.rm=TRUE) > 100000) {
 
         values <- paste0(round(values / 1000, 1), 'K')
 
-    } else if(max(values) > 1000) {
+    } else if(max(values, na.rm=TRUE) > 1000) {
 
         values <- paste0(round(values / 1000, 1), 'K')
 
-    } else if(max(values) > 100) {
+    } else if(max(values, na.rm=TRUE) > 100) {
 
         values <- round(values, 0)
 
-    } else if(max(values) < 1) {
+    } else if(max(values, na.rm=TRUE) < 1) {
 
         values <- round(values, 2)
 
@@ -423,7 +434,7 @@ helper_add_labels <- function(ggplot_object, input, dataset) {
 
         ggplot_object <- ggplot_object +
             geom_point() +
-            geom_text(aes(label=format_labels(as.numeric(dataset))), check_overlap=TRUE, vjust=1, hjust=1)
+            geom_text(aes(label=format_labels(as.numeric(dataset))), check_overlap=TRUE, vjust=1, hjust=1, na.rm = TRUE)
     }
 
     return (ggplot_object)
@@ -567,30 +578,38 @@ reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_t
             req(input$var_plots__baseline__forecast_horizon)
         }
 
+
+
         log_message_block_start("Creating `time-series` graph...")
 
-        # reactive data
+       # reactive data
         local_dataset <- dataset()
         
-        if(is.null(input$var_plots__facet) || !input$var_plots__facet || rt_ts_is_single_variable(local_dataset)) {
+        # if(is.null(input$var_plots__facet) || !input$var_plots__facet || rt_ts_is_single_variable(local_dataset)) {
     
-            ggplot_object <- local_dataset %>%
-                autoplot()
+        #     ggplot_object <- local_dataset %>%
+        #         autoplot()
         
-        } else {
+        # } else {
 
-            ggplot_object <- local_dataset %>%
-                autoplot(facets=input$var_plots__facet)
+        #     ggplot_object <- local_dataset %>%
+        #         autoplot(facets=input$var_plots__facet)
             
-        }
+        # }
 
-        ggplot_object <- ggplot_object %>%
+        ggplot_object <- rt_ts_plot_time_series(dataset=local_dataset,
+                                                show_values=input$var_plots__show_values,
+                                                show_points=input$var_plots__show_points,
+                                                show_dates=input$var_plots__show_dates,
+                                                #include_last_point=input$var_plots__show_last_point,
+                                                y_zoom_min=input$var_plots__y_zoom_min,
+                                                y_zoom_max=input$var_plots__y_zoom_max,
+                                                facet_multi_variables=input$var_plots__facet,
+                                                base_size=global__theme_base_size) %>%
             helper_add_baseline_forecasts(input, local_dataset, isolate(reactiveValues_models)) %>%
-            helper_y_zoom(input, local_dataset) %>%
-            helper_add_labels(input, local_dataset) %>%
-            helper_add_transformation_y_axis_label(reactiveValue_trans) +
-            theme_light() +
-            expand_limits(y=0)
+            #helper_y_zoom(input, local_dataset) %>%
+            #helper_add_labels(input, local_dataset) %>%
+            helper_add_transformation_y_axis_label(reactiveValue_trans)
     })
 }
 
