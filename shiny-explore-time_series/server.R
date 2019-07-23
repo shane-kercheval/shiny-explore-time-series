@@ -78,6 +78,8 @@ shinyServer(function(input, output, session) {
                                                                                       reactiveValues__vp__transformations)
 
     output$var_plots__date_slider__UI <- renderUI({ create_date_slider(dataset=reactive__source_data(), inputId='var_plots__date_slider') })
+    output$var_plots__date_zoom_slider__UI <- renderUI({ create_date_slider(dataset=reactive__source_data(), inputId='var_plots__date_zoom_slider', control_label="X-Axis Min/Max") })
+
     output$var_plots__ts_variables__UI <- renderUI__var_plots__ts_variables__UI(reactive__source_data)
     # creates the ggplot object
     reactiveValues__vp__models <- reactiveValues(models=NULL)

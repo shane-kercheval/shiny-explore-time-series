@@ -430,10 +430,15 @@ helper_add_labels <- function(ggplot_object, input, dataset) {
     ######################################################################################################
     # PLOT OPTIONS
     ######################################################################################################
+    if(!is.null(input$var_plots__show_points) && input$var_plots__show_points) {
+
+        ggplot_object <- ggplot_object +
+            geom_point()
+    }
+
     if(!is.null(input$var_plots__show_values) && input$var_plots__show_values) {
 
         ggplot_object <- ggplot_object +
-            geom_point() +
             geom_text(aes(label=format_labels(as.numeric(dataset))), check_overlap=TRUE, vjust=1, hjust=1, na.rm = TRUE)
     }
 
@@ -622,6 +627,17 @@ reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_t
                 helper_add_labels(input, local_dataset) %>%
                 helper_add_transformation_y_axis_label(reactiveValue_trans)
         }
+
+
+        forecast_horizon <- NULL
+        if(!is.null(input$var_plots__baseline_forecasts) && length(input$var_plots__baseline_forecasts) > 0 && !is.null(input$var_plots__baseline__forecast_horizon)) {
+            forecast_horizon <- input$var_plots__baseline__forecast_horizon
+        }
+        local_start_end <- convert_start_end_window_decimal(local_dataset,
+                                                           input$var_plots__date_zoom_slider,
+                                                           forecast_horizon=forecast_horizon)
+        ggplot_object <- ggplot_object +
+            coord_cartesian(xlim=c(local_start_end[[1]], local_start_end[[2]]))
     })
 }
 
