@@ -33,21 +33,31 @@ eventReactive__regression__results__creator <- function(input, dataset) {
             }
             # log_message_variable('interaction_variables', interaction_variables)
 
-            local_dataset <- dataset()
-            local_date_slider <- input$regression__date_slider
-            local_date_slider <- convert_start_end_window(local_dataset, local_date_slider)
-            # log_message_variable('input$regression__date_slider', paste0(local_date_slider, collapse='-'))
-            local_dataset <- window(local_dataset,
-                                start=local_date_slider[[1]],
-                                end=local_date_slider[[2]])
-
-
             local_dependent_variable <- input$regression__dependent_variable
 
             if(local_dependent_variable == single_time_series_variable_name) {
 
                 local_dependent_variable <- NULL
             }
+
+
+            local_dataset <- dataset()
+            if(rt_ts_is_multi_variable(local_dataset)) {
+
+                local_dataset <- local_dataset[, c(input$regression__dependent_variable, input$regression__independent_variables, interaction_variables) %>% rt_remove_val(c('trend', 'season'))]
+
+                # might have filtered dataset so it is now only a single-var; in which case we have to change the dependent variable
+                if(rt_ts_is_single_variable(local_dataset)) {
+
+                    local_dependent_variable <- NULL
+                }
+            }
+            local_date_slider <- input$regression__date_slider
+            local_date_slider <- convert_start_end_window(local_dataset, local_date_slider)
+            # log_message_variable('input$regression__date_slider', paste0(local_date_slider, collapse='-'))
+            local_dataset <- window(local_dataset,
+                                    start=local_date_slider[[1]],
+                                    end=local_date_slider[[2]])
 
             local_lambda <- input$regression__tslm_lambda
             if(local_lambda == 'None') {
@@ -62,7 +72,7 @@ eventReactive__regression__results__creator <- function(input, dataset) {
             results <- rt_ts_auto_regression(dataset=local_dataset,
                                              dependent_variable=local_dependent_variable,
                                              independent_variables=input$regression__independent_variables,
-                                    
+                                             ignore_last_x_periods=null_if_na(input$regression__ignore_last_x_periods),
                                              # interaction_variables NOT SUPPORTED 
                                              # list of vectors, each element in the list is a pair of interaction terms
                                              # only supporting two interaction variables at the moment
