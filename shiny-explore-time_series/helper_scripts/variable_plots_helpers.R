@@ -584,32 +584,44 @@ reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_t
 
        # reactive data
         local_dataset <- dataset()
-        
-        # if(is.null(input$var_plots__facet) || !input$var_plots__facet || rt_ts_is_single_variable(local_dataset)) {
-    
-        #     ggplot_object <- local_dataset %>%
-        #         autoplot()
-        
-        # } else {
 
-        #     ggplot_object <- local_dataset %>%
-        #         autoplot(facets=input$var_plots__facet)
+        # for now, if we have forecasts, let's use auto-layer so the forecasting autolayers work
+        if(is.null(input$var_plots__baseline_forecasts) && length(input$var_plots__baseline_forecasts) == 0) {
+
+            ggplot_object <- rt_ts_plot_time_series(dataset=local_dataset,
+                                                    show_values=input$var_plots__show_values,
+                                                    show_points=input$var_plots__show_points,
+                                                    show_dates=input$var_plots__show_dates,
+                                                    #include_last_point=input$var_plots__show_last_point,
+                                                    y_zoom_min=input$var_plots__y_zoom_min,
+                                                    y_zoom_max=input$var_plots__y_zoom_max,
+                                                    facet_multi_variables=input$var_plots__facet,
+                                                    base_size=global__theme_base_size) %>%
+                helper_add_baseline_forecasts(input, local_dataset, isolate(reactiveValues_models)) %>%
+                #helper_y_zoom(input, local_dataset) %>%
+                #helper_add_labels(input, local_dataset) %>%
+                helper_add_transformation_y_axis_label(reactiveValue_trans)
+
+        } else {
+
+            if(is.null(input$var_plots__facet) || !input$var_plots__facet || rt_ts_is_single_variable(local_dataset)) {
+        
+                ggplot_object <- local_dataset %>%
+                    autoplot()
             
-        # }
+            } else {
 
-        ggplot_object <- rt_ts_plot_time_series(dataset=local_dataset,
-                                                show_values=input$var_plots__show_values,
-                                                show_points=input$var_plots__show_points,
-                                                show_dates=input$var_plots__show_dates,
-                                                #include_last_point=input$var_plots__show_last_point,
-                                                y_zoom_min=input$var_plots__y_zoom_min,
-                                                y_zoom_max=input$var_plots__y_zoom_max,
-                                                facet_multi_variables=input$var_plots__facet,
-                                                base_size=global__theme_base_size) %>%
-            helper_add_baseline_forecasts(input, local_dataset, isolate(reactiveValues_models)) %>%
-            #helper_y_zoom(input, local_dataset) %>%
-            #helper_add_labels(input, local_dataset) %>%
-            helper_add_transformation_y_axis_label(reactiveValue_trans)
+                ggplot_object <- local_dataset %>%
+                    autoplot(facets=input$var_plots__facet)
+                
+            }
+
+            ggplot_object <- ggplot_object %>%
+                helper_add_baseline_forecasts(input, local_dataset, isolate(reactiveValues_models)) %>%
+                helper_y_zoom(input, local_dataset) %>%
+                helper_add_labels(input, local_dataset) %>%
+                helper_add_transformation_y_axis_label(reactiveValue_trans)
+        }
     })
 }
 
