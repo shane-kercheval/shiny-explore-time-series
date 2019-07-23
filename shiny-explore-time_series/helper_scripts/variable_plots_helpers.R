@@ -1228,9 +1228,7 @@ renderPlot__var_plots__decomposition <- function(session, input, dataset) {
 
             }
 
-            decom_object <- decom_object +
-            theme_light()
-
+            decom_object <- decom_object + theme_light()
         })
 
         return (decom_object)
