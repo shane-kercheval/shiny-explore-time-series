@@ -99,8 +99,6 @@ reactive__source_data__creator <- function(input, custom_triggers) {
 
                     loaded_dataset <- elecequip
                 }
-
-
             } else {
 
                 if(str_sub(upload_file_path, -4) == '.RDS') {

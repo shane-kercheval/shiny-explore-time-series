@@ -87,13 +87,21 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
     ######################################################################################################
     local_baseline_forecasts <- input$var_plots__baseline_forecasts
     local_baseline_horizon <- input$var_plots__baseline__forecast_horizon
+    local_ignore_n_periods <- input$var_plots__baseline__ignore_n_periods
 
     if(rt_ts_is_single_variable(dataset) &&
-       !is.null(local_baseline_forecasts) &&
-       !is.null(local_baseline_horizon)) {
+           !is.null(local_baseline_forecasts) &&
+           !is.null(local_baseline_horizon)) {
 
         log_message_variable('input$var_plots__baseline__forecast_horizon', local_baseline_horizon)
         log_message_variable('input$var_plots__baseline_forecasts', local_baseline_forecasts)
+        log_message_variable('input$var_plots__baseline__ignore_n_periods', local_ignore_n_periods)
+
+
+        if(!is.null(local_ignore_n_periods) && !is.na(local_ignore_n_periods)) {
+
+            dataset <- head(dataset, length(dataset) - local_ignore_n_periods)
+        }
 
         local_lambda <- input$var_plots__baseline__lambda
         if(local_lambda == 'None') {
@@ -134,7 +142,8 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Mean',
-                          PI=show_PI)
+                          PI=show_PI,
+                          alpha=0.5)
         }
 
         if('Naive' %in% local_baseline_forecasts) {
@@ -151,7 +160,8 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Naive',
-                          PI=show_PI)
+                          PI=show_PI,
+                          alpha=0.5)
         }
 
         if('Seasonal Naive' %in% local_baseline_forecasts) {
@@ -168,7 +178,8 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Seasonal Naive',
-                          PI=show_PI)
+                          PI=show_PI,
+                          alpha=0.5)
         }
 
         if('Drift' %in% local_baseline_forecasts) {
@@ -186,7 +197,8 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Drift',
-                          PI=show_PI)
+                          PI=show_PI,
+                          alpha=0.5)
         }
 
         if('Natural Cubic Smoothing Spline' %in% local_baseline_forecasts) {
@@ -203,7 +215,8 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Natural Cubic Smoothing Spline',
-                          PI=show_PI)
+                          PI=show_PI,
+                          alpha=0.5)
         }
 
         if('Auto' %in% local_baseline_forecasts) {
@@ -221,7 +234,8 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series='Auto',
-                          PI=show_PI)
+                          PI=show_PI,
+                          alpha=0.5)
         }
 
         if("ETS" %in% local_baseline_forecasts) {
@@ -240,7 +254,8 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series="ETS",
-                          PI=show_PI)
+                          PI=show_PI,
+                          alpha=0.5)
         }
 
         if("STL + ETS" %in% local_baseline_forecasts) {
@@ -258,7 +273,8 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series="STL + ETS",
-                          PI=show_PI)
+                          PI=show_PI,
+                          alpha=0.5)
         }
 
         if("Auto ARIMA (approx.)" %in% local_baseline_forecasts) {
@@ -278,7 +294,8 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series="Auto ARIMA (approx.)",
-                          PI=show_PI)
+                          PI=show_PI,
+                          alpha=0.5)
         }
 
         if("Auto ARIMA (all)" %in% local_baseline_forecasts) {
@@ -298,7 +315,8 @@ helper_add_baseline_forecasts <- function(ggplot_object, input, dataset, reactiv
             ggplot_object <- ggplot_object +
                 autolayer(forecast_model,
                           series="Auto ARIMA (all)",
-                          PI=show_PI)
+                          PI=show_PI,
+                          alpha=0.5)
         }
 
         reactiveValues_models$models <- local_models
@@ -590,6 +608,16 @@ reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_t
        # reactive data
         local_dataset <- dataset()
 
+        num_periods <- NULL
+        if(rt_ts_is_single_variable(dataset())) {
+
+            num_periods <- length(local_dataset)
+        } else {
+
+            num_periods <- nrow(local_dataset)
+        }
+
+
         # for now, if we have forecasts, let's use auto-layer so the forecasting autolayers work
         if(is.null(input$var_plots__baseline_forecasts) && length(input$var_plots__baseline_forecasts) == 0) {
 
@@ -628,16 +656,22 @@ reactive__var_plots__ggplot__creator <- function(input, dataset, reactiveValue_t
                 helper_add_transformation_y_axis_label(reactiveValue_trans)
         }
 
+        if(num_periods > 36) {
+        # TEMPERARILY have to do this because coord_cartesian doesn't work on rt_ts_plot_time_series 
+        # because if the periods is <= 36 it generates its own x-axis      
 
-        forecast_horizon <- NULL
-        if(!is.null(input$var_plots__baseline_forecasts) && length(input$var_plots__baseline_forecasts) > 0 && !is.null(input$var_plots__baseline__forecast_horizon)) {
-            forecast_horizon <- input$var_plots__baseline__forecast_horizon
+            forecast_horizon <- NULL
+            if(!is.null(input$var_plots__baseline_forecasts) && length(input$var_plots__baseline_forecasts) > 0 && !is.null(input$var_plots__baseline__forecast_horizon)) {
+                forecast_horizon <- input$var_plots__baseline__forecast_horizon
+            }
+            local_start_end <- convert_start_end_window_decimal(local_dataset,
+                                                               input$var_plots__date_zoom_slider,
+                                                               forecast_horizon=forecast_horizon)
+            ggplot_object <- ggplot_object +
+                coord_cartesian(xlim=c(local_start_end[[1]], local_start_end[[2]]))
+
         }
-        local_start_end <- convert_start_end_window_decimal(local_dataset,
-                                                           input$var_plots__date_zoom_slider,
-                                                           forecast_horizon=forecast_horizon)
-        ggplot_object <- ggplot_object +
-            coord_cartesian(xlim=c(local_start_end[[1]], local_start_end[[2]]))
+        return (ggplot_object)
     })
 }
 

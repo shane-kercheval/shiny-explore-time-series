@@ -20,7 +20,6 @@ eventReactive__regression__results__creator <- function(input, dataset) {
         local_interaction_term1 <- input$regression__interaction_term1
         local_interaction_term2 <- input$regression__interaction_term2
 
-
         withProgress(value=1/2, message='Running Regression',{
 
             interaction_variables <- NULL
@@ -39,7 +38,6 @@ eventReactive__regression__results__creator <- function(input, dataset) {
 
                 local_dependent_variable <- NULL
             }
-
 
             local_dataset <- dataset()
             if(rt_ts_is_multi_variable(local_dataset)) {
@@ -84,7 +82,6 @@ eventReactive__regression__results__creator <- function(input, dataset) {
                                              build_graphs=TRUE,
                                              show_dataset_labels=FALSE,
                                              show_forecast_labels=TRUE
-
                                        )
 
             shinyjs::show('regression__formula_header')

@@ -138,8 +138,8 @@ convert_start_end_window_decimal <- function(dataset, start_end_window, forecast
         e <- freq_to_dec(c(start_end_window[2], frequency(dataset)), frequency(dataset))
     }
 
-    log_message_variable('default start dec', s)
-    log_message_variable('default end dec', e)
+    log_message_variable('final start dec', s)
+    log_message_variable('final end dec', e)
 
 
     log_message_variable('Converted start_end_window', paste0(c(s, e), collapse=', '))    
